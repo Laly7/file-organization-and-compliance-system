@@ -101,14 +101,14 @@ export default function ScanClient() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <h2 className="text-2xl font-bold text-center mb-8 uppercase">
+      <h2 className="text-2xl font-bold text-center mb-8 uppercase text-slate-900">
         Select Folder
       </h2>
 
       <div className="bg-white rounded-3xl shadow-xl border overflow-hidden">
         <div className="p-6 border-b bg-gray-50">
           <input
-            className="w-full p-3 border rounded-xl"
+            className="w-full p-3 border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             placeholder="Search folder..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -160,21 +160,21 @@ export default function ScanClient() {
           </div>
 
           <div className="w-80 p-6 bg-gray-50">
-            <h3 className="font-bold mb-4">Selected Details</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">Selected Details</h3>
             {selectedFolder ? (
               <div>
-                <p className="font-bold">{selectedFolder.name}</p>
-                <p className="text-xs text-gray-500 break-all">
+                <p className="font-bold text-slate-900">{selectedFolder.name}</p>
+                <p className="text-sm text-gray-700 break-all">
                   /OneDrive/{selectedFolder.name}
                 </p>
               </div>
             ) : (
-              <p className="text-gray-400">No folder selected</p>
+              <p className="text-gray-600">No folder selected</p>
             )}
 
             <button
               onClick={() => router.push("/dashboard")}
-              className="mt-6 w-full py-3 rounded-xl bg-gray-200 font-bold"
+              className="mt-6 w-full py-3 rounded-xl bg-gray-300 text-gray-900 font-bold hover:bg-gray-400 transition"
             >
               Cancel
             </button>

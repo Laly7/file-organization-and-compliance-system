@@ -39,8 +39,8 @@ export default function TemplateClient({ templates }: { templates: any[] }) {
       <main className="flex-1 overflow-y-auto p-10">
          <div className="max-w-6xl mx-auto h-full flex flex-col">
             <h2 className="text-2xl font-black text-gray-800 mb-8 uppercase tracking-widest text-center">Select Template</h2>
-            <div className="flex gap-10 flex-1 min-h-0 bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8">
-               <div className="w-80 flex flex-col border-r border-gray-100 pr-8">
+            <div className="flex flex-col lg:flex-row gap-10 flex-1 min-h-0 bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8">
+               <div className="w-full lg:w-80 min-w-0 flex flex-col border-r border-gray-100 pr-0 lg:pr-8">
                   <div className="mb-6 relative">
                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -88,10 +88,10 @@ export default function TemplateClient({ templates }: { templates: any[] }) {
                   </div>
                </div>
 
-               <div className="flex-1 flex flex-col pl-8">
+               <div className="flex-1 flex flex-col min-w-0 pl-0 lg:pl-8">
                   {activeTemplate ? (
                      <>
-                        <div className="flex justify-between items-start mb-8">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
                            <div>
                               <h3 className="text-sm font-black text-blue-600 uppercase tracking-widest mb-1">Template Preview</h3>
                               <h4 className="text-3xl font-black text-gray-900">{activeTemplate.name}</h4>
@@ -106,7 +106,7 @@ export default function TemplateClient({ templates }: { templates: any[] }) {
                            </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-8 flex-1">
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 flex-1">
                            <div className="space-y-6">
                               <div>
                                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Required Folders</p>
@@ -154,8 +154,8 @@ export default function TemplateClient({ templates }: { templates: any[] }) {
                            </div>
                         </div>
 
-                        <div className="pt-8 mt-auto border-t border-gray-100 flex justify-between items-center">
-                           <Link href="/system/scan" className="text-gray-400 font-bold hover:text-gray-600 text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
+                        <div className="pt-8 mt-auto border-t border-gray-100 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
+                           <Link href="/system/scan" className="text-gray-400 font-bold hover:text-gray-600 text-xs uppercase tracking-widest transition-colors flex items-center gap-2 justify-center sm:justify-start">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                               </svg>

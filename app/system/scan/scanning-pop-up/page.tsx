@@ -65,7 +65,7 @@ export default function ScanningPopUPPage() {
 
         <button 
           onClick={() => router.push("/scan")}
-          className="px-10 py-3 bg-gray-100 text-gray-500 font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-gray-200 transition-all active:scale-95"
+          className="px-10 py-3 bg-slate-300 text-slate-900 font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-slate-400 transition-all active:scale-95"
         >
           Cancel
         </button>

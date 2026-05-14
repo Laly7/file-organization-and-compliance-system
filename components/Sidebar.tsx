@@ -40,7 +40,7 @@ export default function Sidebar() {
 
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="p-2 rounded hover:bg-gray-100"
+                    className="p-2 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
                 >
                     {isOpen ? <X size={22} /> : <Menu size={22} />}
                 </button>

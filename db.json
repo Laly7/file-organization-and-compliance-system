@@ -18,6 +18,20 @@
         "Notes.txt",
         "Draft.docx"
       ]
+    },
+    {
+      "id": "t_1778737909347",
+      "name": "Anime",
+      "requiredFolders": [
+        "2026/",
+        "2025/",
+        "2024/"
+      ],
+      "requiredFiles": [
+        "List.docx"
+      ],
+      "namingRule": "YYYY_ProjectName",
+      "optionalFiles": []
     }
   ],
   "rules": [
@@ -158,8 +172,40 @@
     }
   ],
   "stats": {
-    "totalFoldersScanned": 0,
+    "totalFoldersScanned": 1,
     "lastScanDate": "None",
-    "recentScans": []
+    "recentScans": [
+      {
+        "id": "1778738119234",
+        "auditId": "AUD-1778738119234",
+        "folder": "Apps",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "14/05/2026, 1:55:19 pm",
+        "status": "Incomplete",
+        "compliance": 0,
+        "totalFiles": 0,
+        "logs": [
+          {
+            "file": "Report.pdf",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-14T05:55:19.224Z"
+          },
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-14T05:55:19.224Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-14T05:55:19.224Z"
+          }
+        ]
+      }
+    ]
   }
 }
