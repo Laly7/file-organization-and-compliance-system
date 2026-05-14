@@ -1,3 +1,3 @@
 # File Organization and Compliance System
 
-A Final Year Project built using Next.js.
+After you run the code (npm run dev): http://localhost:3000/auth/login
