@@ -1,0 +1,165 @@
+{
+  "templates": [
+    {
+      "id": "t_1778124179454",
+      "name": "Project Template",
+      "requiredFolders": [
+        "Docs",
+        "Slides",
+        "Data"
+      ],
+      "requiredFiles": [
+        "Report.pdf",
+        "Presentation.pptx",
+        "Budget.xlsx"
+      ],
+      "namingRule": "Project_YYYY",
+      "optionalFiles": [
+        "Notes.txt",
+        "Draft.docx"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": 1778123999747,
+      "name": "Missing Report File",
+      "type": "naming",
+      "condition": "Missing file",
+      "action": null,
+      "status": true,
+      "templateId": null
+    },
+    {
+      "id": 1778124031692,
+      "name": "Wrong Folder Placement",
+      "type": "naming",
+      "condition": "Wrong folder",
+      "action": null,
+      "status": true,
+      "templateId": null
+    },
+    {
+      "id": 1778124061329,
+      "name": "Invalid File Naming",
+      "type": "naming",
+      "condition": "Wrong title",
+      "action": null,
+      "status": true,
+      "templateId": null
+    }
+  ],
+  "scans": [
+    {
+      "id": "1778126991259",
+      "createdAt": "2026-05-07T04:09:51.259Z",
+      "totalFiles": 4,
+      "logs": []
+    },
+    {
+      "id": "1778127007237",
+      "createdAt": "2026-05-07T04:10:07.237Z",
+      "totalFiles": 2,
+      "logs": [
+        {
+          "file": "Report.pdf",
+          "rule": "Template Missing File",
+          "action": "Missing file detected",
+          "timestamp": "2026-05-07T04:10:07.237Z"
+        }
+      ]
+    },
+    {
+      "id": "1778127018815",
+      "createdAt": "2026-05-07T04:10:18.815Z",
+      "totalFiles": 4,
+      "logs": [
+        {
+          "file": "Report.pdf",
+          "rule": "Template Missing File",
+          "action": "Missing file detected",
+          "timestamp": "2026-05-07T04:10:18.815Z"
+        },
+        {
+          "file": "Presentation.pptx",
+          "rule": "Template Missing File",
+          "action": "Missing file detected",
+          "timestamp": "2026-05-07T04:10:18.815Z"
+        },
+        {
+          "file": "Budget.xlsx",
+          "rule": "Template Missing File",
+          "action": "Missing file detected",
+          "timestamp": "2026-05-07T04:10:18.815Z"
+        }
+      ]
+    },
+    {
+      "id": "1778127065034",
+      "createdAt": "2026-05-07T04:11:05.034Z",
+      "totalFiles": 4,
+      "logs": []
+    },
+    {
+      "id": "1778127091420",
+      "createdAt": "2026-05-07T04:11:31.420Z",
+      "totalFiles": 2,
+      "logs": [
+        {
+          "file": "Report.pdf",
+          "rule": "Template Missing File",
+          "action": "Missing file detected",
+          "timestamp": "2026-05-07T04:11:31.420Z"
+        }
+      ]
+    },
+    {
+      "id": "1778137392317",
+      "createdAt": "2026-05-07T07:03:12.317Z",
+      "totalFiles": 4,
+      "logs": []
+    },
+    {
+      "id": "1778137434625",
+      "createdAt": "2026-05-07T07:03:54.625Z",
+      "totalFiles": 2,
+      "logs": [
+        {
+          "file": "Report.pdf",
+          "rule": "Template Missing File",
+          "action": "Missing file detected",
+          "timestamp": "2026-05-07T07:03:54.625Z"
+        }
+      ]
+    },
+    {
+      "id": "1778138502208",
+      "createdAt": "2026-05-07T07:21:42.208Z",
+      "totalFiles": 4,
+      "logs": []
+    },
+    {
+      "id": "1778138503749",
+      "createdAt": "2026-05-07T07:21:43.749Z",
+      "totalFiles": 4,
+      "logs": []
+    },
+    {
+      "id": "1778138582369",
+      "createdAt": "2026-05-07T07:23:02.369Z",
+      "totalFiles": 4,
+      "logs": []
+    },
+    {
+      "id": "1778138935545",
+      "createdAt": "2026-05-07T07:28:55.545Z",
+      "totalFiles": 4,
+      "logs": []
+    }
+  ],
+  "stats": {
+    "totalFoldersScanned": 0,
+    "lastScanDate": "None",
+    "recentScans": []
+  }
+}
