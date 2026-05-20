@@ -19,7 +19,7 @@ export async function addTemplate(formData: FormData) {
 
   db.templates.push(newTemplate);
   await saveDbData(db);
-  revalidatePath("/template-selection");
+  revalidatePath("/system/templates");
   return true;
 }
 
@@ -40,7 +40,7 @@ export async function updateTemplate(id: string, formData: FormData) {
   };
 
   await saveDbData(db);
-  revalidatePath("/template-selection");
+  revalidatePath("/system/templates");
   return true;
 }
 
@@ -137,7 +137,7 @@ export async function deleteTemplate(id: string) {
   db.templates = db.templates.filter((t: any) => t.id !== id);
 
   await saveDbData(db);
-  revalidatePath("/template-selection");
+  revalidatePath("/system/templates");
   return true;
 }
 
@@ -153,3 +153,20 @@ export async function deleteScan(id: string) {
   revalidatePath("/dashboard");
   return true;
 }
+
+export async function updateScanCompliance(id: string, compliance: number) {
+  const db = await getDbData();
+  if (!db) return false;
+
+  const index = db.stats.recentScans.findIndex((s: any) => s.id === id);
+  if (index !== -1) {
+    db.stats.recentScans[index].compliance = compliance;
+    db.stats.recentScans[index].status = compliance >= 80 ? "Completed" : "Incomplete";
+    await saveDbData(db);
+    revalidatePath("/report");
+    revalidatePath("/dashboard");
+    return true;
+  }
+  return false;
+}
+

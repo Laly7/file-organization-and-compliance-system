@@ -11,7 +11,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       authorization: {
         params: {
           scope:
-            "openid profile email offline_access User.Read Files.Read Files.Read.All"
+            "openid profile email offline_access User.Read Files.Read Files.Read.All Files.ReadWrite.All"
         }
       }
     })

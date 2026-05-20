@@ -109,7 +109,7 @@ export default function RulesClient({ initialRules }: { initialRules: any[] }) {
                       </td>
 
                       <td className="px-8 py-5">
-                        <Link href="/template-selection" className="text-blue-600 font-bold text-xs hover:underline decoration-2 underline-offset-4">
+                        <Link href="/system/templates/select-template" className="text-blue-600 font-bold text-xs hover:underline decoration-2 underline-offset-4">
                           {rule.template || 'Default'}
                         </Link>
                       </td>

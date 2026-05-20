@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import { getDriveFilesRecursively } from "@/lib/onedrive";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -11,23 +12,14 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const folderId = searchParams.get("folderId");
 
-  const url = folderId
-    ? `https://graph.microsoft.com/v1.0/me/drive/items/${folderId}/children`
-    : "https://graph.microsoft.com/v1.0/me/drive/root/children";
+  if (!folderId) {
+    return NextResponse.json({ files: [] });
+  }
 
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${session.accessToken}`
-    }
-  });
-
-  const data = await res.json();
-
-  const files = (data.value || []).map((file: any) => ({
-    id: file.id,
-    name: file.name,
-    webUrl: file.webUrl
-  }));
-
-  return NextResponse.json({ files });
+  try {
+    const files = await getDriveFilesRecursively(session.accessToken, folderId);
+    return NextResponse.json({ files });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }

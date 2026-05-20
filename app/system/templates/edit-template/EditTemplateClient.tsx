@@ -16,7 +16,7 @@ export default function EditTemplateClient({ template }: { template: any }) {
     const formData = new FormData(e.currentTarget);
     try {
       await updateTemplate(template.id, formData);
-      router.push("/template-selection");
+      router.push("/system/templates/select-template");
     } catch (err) {
       alert("Error updating template.");
       setIsSaving(false);
@@ -26,7 +26,7 @@ export default function EditTemplateClient({ template }: { template: any }) {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/template-selection" className="h-10 w-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:shadow-md transition-all">
+        <Link href="/system/templates/select-template" className="h-10 w-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:shadow-md transition-all">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -101,7 +101,7 @@ export default function EditTemplateClient({ template }: { template: any }) {
                 />
                 <div className="mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 italic">Pro Tip</p>
-                  <p className="text-xs text-gray-500 leading-relaxed font-medium">To modify behavior based on these conditions, visit the <Link href="/rules" className="text-blue-600 font-bold hover:underline">Rules Engine</Link>.</p>
+                   <p className="text-xs text-gray-500 leading-relaxed font-medium">To modify behavior based on these conditions, visit the <Link href="/system/rules" className="text-blue-600 font-bold hover:underline">Rules Engine</Link>.</p>
                 </div>
               </div>
             </div>
@@ -109,7 +109,7 @@ export default function EditTemplateClient({ template }: { template: any }) {
 
           <div className="pt-10 border-t border-gray-50 flex justify-end gap-4">
             <Link
-              href="/template-selection"
+              href="/system/templates/select-template"
               className="px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors"
             >
               Cancel

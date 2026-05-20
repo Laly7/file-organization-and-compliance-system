@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
+import { deleteTemplate } from "@/app/actions";
 
 export default function TemplateClient({ templates }: { templates: any[] }) {
    const router = useRouter();
@@ -36,11 +36,11 @@ export default function TemplateClient({ templates }: { templates: any[] }) {
    };
 
    return (
-      <main className="flex-1 overflow-y-auto p-10">
+      <main className="flex-1 overflow-y-auto p-4 md:p-10">
          <div className="max-w-6xl mx-auto h-full flex flex-col">
-            <h2 className="text-2xl font-black text-gray-800 mb-8 uppercase tracking-widest text-center">Select Template</h2>
-            <div className="flex flex-col lg:flex-row gap-10 flex-1 min-h-0 bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8">
-               <div className="w-full lg:w-80 min-w-0 flex flex-col border-r border-gray-100 pr-0 lg:pr-8">
+            <h2 className="text-2xl font-black text-gray-800 mb-6 md:mb-8 uppercase tracking-widest text-center">Select Template</h2>
+            <div className="flex flex-col lg:flex-row gap-6 md:gap-10 flex-1 min-h-0 bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-5 md:p-8">
+               <div className="w-full lg:w-80 min-w-0 flex flex-col border-b lg:border-b-0 lg:border-r border-gray-100 pb-6 lg:pb-0 pr-0 lg:pr-8">
                   <div className="mb-6 relative">
                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -96,13 +96,26 @@ export default function TemplateClient({ templates }: { templates: any[] }) {
                               <h3 className="text-sm font-black text-blue-600 uppercase tracking-widest mb-1">Template Preview</h3>
                               <h4 className="text-3xl font-black text-gray-900">{activeTemplate.name}</h4>
                            </div>
-                           <div className="flex gap-2">
+                           <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                               <Link 
                                  href={`/system/templates/edit-template?id=${activeTemplate.id}`}
-                                 className="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-xs font-bold uppercase tracking-widest"
+                                 title="Modify this template's rules and required files"
+                                 className="flex-1 sm:flex-none text-center px-4 py-2 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-xs font-bold uppercase tracking-widest"
                               >
                                  Edit
                               </Link>
+                              <button
+                                 onClick={async () => {
+                                    if (confirm('Are you sure you want to delete this template?')) {
+                                       await deleteTemplate(activeTemplate.id);
+                                       router.refresh();
+                                    }
+                                 }}
+                                 className="flex-1 sm:flex-none text-center px-4 py-2 border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors text-xs font-bold uppercase tracking-widest"
+                                 title="Permanently remove this template"
+                              >
+                                 🗑️ Delete
+                              </button>
                            </div>
                         </div>
 
@@ -154,8 +167,8 @@ export default function TemplateClient({ templates }: { templates: any[] }) {
                            </div>
                         </div>
 
-                        <div className="pt-8 mt-auto border-t border-gray-100 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
-                           <Link href="/system/scan" className="text-gray-400 font-bold hover:text-gray-600 text-xs uppercase tracking-widest transition-colors flex items-center gap-2 justify-center sm:justify-start">
+                        <div className="pt-6 sm:pt-8 mt-6 sm:mt-auto border-t border-gray-100 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
+                           <Link href="/system/scan" title="Return to the folder scanning page" className="text-gray-400 font-bold hover:text-gray-600 text-xs uppercase tracking-widest transition-colors flex items-center gap-2 justify-center sm:justify-start">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                               </svg>
@@ -163,7 +176,8 @@ export default function TemplateClient({ templates }: { templates: any[] }) {
                            </Link>
                            <button 
                               onClick={handleNext}
-                              className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-blue-700 transform hover:-translate-y-1 transition-all active:translate-y-0"
+                              title="Use this template to scan your selected folder"
+                              className="bg-blue-600 text-white px-6 py-3 sm:px-10 sm:py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-blue-700 transform hover:-translate-y-1 transition-all active:translate-y-0 text-center"
                            >
                               Apply Template
                            </button>

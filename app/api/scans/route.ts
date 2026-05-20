@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDbData, saveDbData } from "@/lib/db";
 import { processFiles } from "@/lib/ruleEngine";
-import { getDriveChildren } from "@/lib/onedrive";
+import { getDriveChildren, getDriveFilesRecursively } from "@/lib/onedrive";
 import { auth } from "@/auth";
 import { analyzeFiles } from "@/lib/ruleEngine";
 
@@ -54,18 +54,10 @@ export async function POST(req: Request) {
       (r: any) => r.templateId === templateId
     );
 
-    const driveItems = await getDriveChildren(
+    const files = await getDriveFilesRecursively(
       token,
       folderId
     );
-
-    const files = driveItems
-      .filter((item: any) => item.file)
-      .map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        path: item.parentReference?.path || ""
-      }));
 
     const logs = analyzeFiles(
       files,
@@ -76,21 +68,33 @@ export async function POST(req: Request) {
     console.log("LOGS:", logs);
 
     const requiredFiles = template.requiredFiles || [];
+    const requiredFolders = template.requiredFolders || [];
 
-    const realFileNames = files.map((f: any) =>
+    const realFileNames = files.filter((f: any) => !f.isFolder).map((f: any) =>
       f.name.trim().toLowerCase()
+    );
+
+    const realFolderNames = files.filter((f: any) => f.isFolder).map((f: any) =>
+      f.name.trim().toLowerCase().replace(/\/$/, "")
     );
 
     const matchedFiles = requiredFiles.filter((rf: string) =>
       realFileNames.includes(rf.trim().toLowerCase())
     );
 
+    const matchedFolders = requiredFolders.filter((rf: string) =>
+      realFolderNames.includes(rf.trim().toLowerCase().replace(/\/$/, ""))
+    );
+
+    const totalRequirements = requiredFiles.length + requiredFolders.length;
+    const totalMatched = matchedFiles.length + matchedFolders.length;
+
     const compliance =
-      requiredFiles.length > 0
+      totalRequirements > 0
         ? Math.round(
-          (matchedFiles.length / requiredFiles.length) * 100
+          (totalMatched / totalRequirements) * 100
         )
-    : 0;
+    : 100;
 
     const scan = {
       id: Date.now().toString(),
@@ -98,6 +102,8 @@ export async function POST(req: Request) {
       auditId: "AUD-" + Date.now(),
 
       folder: folderName || "Unknown Folder",
+
+      folderId,
 
       template: template.name,
       

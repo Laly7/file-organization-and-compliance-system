@@ -32,12 +32,25 @@
       ],
       "namingRule": "YYYY_ProjectName",
       "optionalFiles": []
+    },
+    {
+      "id": "t_1779171391388",
+      "name": "FYP",
+      "requiredFolders": [
+        "Docs/",
+        "pdf/"
+      ],
+      "requiredFiles": [
+        "CSS301 System Requirement Specification.pdf"
+      ],
+      "namingRule": "YYYY_ProjectName",
+      "optionalFiles": []
     }
   ],
   "rules": [
     {
       "id": 1778123999747,
-      "name": "Missing Report File",
+      "name": "Missing Report File/Folder",
       "type": "naming",
       "condition": "Missing file",
       "action": null,
@@ -46,7 +59,7 @@
     },
     {
       "id": 1778124031692,
-      "name": "Wrong Folder Placement",
+      "name": "Wrong Placement",
       "type": "naming",
       "condition": "Wrong folder",
       "action": null,
@@ -172,37 +185,544 @@
     }
   ],
   "stats": {
-    "totalFoldersScanned": 1,
+    "totalFoldersScanned": 11,
     "lastScanDate": "None",
     "recentScans": [
       {
-        "id": "1778738119234",
-        "auditId": "AUD-1778738119234",
-        "folder": "Apps",
+        "id": "1779182601595",
+        "auditId": "AUD-1779182601595",
+        "folder": "FYP",
+        "folderId": "3ECFC96F66925EFA!s730b846a76ca4e0682d6ebb529f5d128",
         "template": "Project Template",
         "templateId": "t_1778124179454",
-        "date": "14/05/2026, 1:55:19 pm",
+        "date": "5/19/2026, 5:23:21 PM",
         "status": "Incomplete",
         "compliance": 0,
-        "totalFiles": 0,
+        "totalFiles": 12,
         "logs": [
           {
             "file": "Report.pdf",
             "rule": "Template Missing File",
             "violation": true,
-            "timestamp": "2026-05-14T05:55:19.224Z"
+            "timestamp": "2026-05-19T09:23:21.591Z"
           },
           {
             "file": "Presentation.pptx",
             "rule": "Template Missing File",
             "violation": true,
-            "timestamp": "2026-05-14T05:55:19.224Z"
+            "timestamp": "2026-05-19T09:23:21.591Z"
           },
           {
             "file": "Budget.xlsx",
             "rule": "Template Missing File",
             "violation": true,
-            "timestamp": "2026-05-14T05:55:19.224Z"
+            "timestamp": "2026-05-19T09:23:21.591Z"
+          },
+          {
+            "file": "Docs",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-19T09:23:21.591Z"
+          },
+          {
+            "file": "Slides",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-19T09:23:21.591Z"
+          },
+          {
+            "file": "Data",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-19T09:23:21.591Z"
+          }
+        ]
+      },
+      {
+        "id": "1779244857495",
+        "auditId": "AUD-1779244857495",
+        "folder": "FYP",
+        "folderId": "3ECFC96F66925EFA!s730b846a76ca4e0682d6ebb529f5d128",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/20/2026, 10:40:57 AM",
+        "status": "Incomplete",
+        "compliance": 0,
+        "totalFiles": 12,
+        "logs": [
+          {
+            "file": "Report.pdf",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T02:40:57.480Z"
+          },
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T02:40:57.480Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T02:40:57.480Z"
+          },
+          {
+            "file": "Docs",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T02:40:57.480Z"
+          },
+          {
+            "file": "Slides",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T02:40:57.480Z"
+          },
+          {
+            "file": "Data",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T02:40:57.480Z"
+          }
+        ]
+      },
+      {
+        "id": "1779244910108",
+        "auditId": "AUD-1779244910108",
+        "folder": "Software Project",
+        "folderId": "3ECFC96F66925EFA!s3303a3f8af964adf8cd23660d9f5b3b1",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/20/2026, 10:41:50 AM",
+        "status": "Incomplete",
+        "compliance": 0,
+        "totalFiles": 31,
+        "logs": [
+          {
+            "file": "Report.pdf",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T02:41:50.107Z"
+          },
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T02:41:50.107Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T02:41:50.107Z"
+          },
+          {
+            "file": "Docs",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T02:41:50.107Z"
+          },
+          {
+            "file": "Slides",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T02:41:50.107Z"
+          },
+          {
+            "file": "Data",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T02:41:50.107Z"
+          }
+        ]
+      },
+      {
+        "id": "1779245184240",
+        "auditId": "AUD-1779245184240",
+        "folder": "FYP",
+        "folderId": "3ECFC96F66925EFA!s730b846a76ca4e0682d6ebb529f5d128",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/20/2026, 10:46:24 AM",
+        "status": "Incomplete",
+        "compliance": 0,
+        "totalFiles": 12,
+        "logs": [
+          {
+            "file": "Report.pdf",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T02:46:24.238Z"
+          },
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T02:46:24.238Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T02:46:24.238Z"
+          },
+          {
+            "file": "Docs",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T02:46:24.238Z"
+          },
+          {
+            "file": "Slides",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T02:46:24.238Z"
+          },
+          {
+            "file": "Data",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T02:46:24.238Z"
+          }
+        ]
+      },
+      {
+        "id": "1779245846965",
+        "auditId": "AUD-1779245846965",
+        "folder": "FYP",
+        "folderId": "3ECFC96F66925EFA!s730b846a76ca4e0682d6ebb529f5d128",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/20/2026, 10:57:26 AM",
+        "status": "Incomplete",
+        "compliance": 0,
+        "totalFiles": 12,
+        "logs": [
+          {
+            "file": "Report.pdf",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T02:57:26.963Z"
+          },
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T02:57:26.963Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T02:57:26.963Z"
+          },
+          {
+            "file": "Docs",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T02:57:26.963Z"
+          },
+          {
+            "file": "Slides",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T02:57:26.963Z"
+          },
+          {
+            "file": "Data",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T02:57:26.963Z"
+          }
+        ]
+      },
+      {
+        "id": "1779246210480",
+        "auditId": "AUD-1779246210480",
+        "folder": "Swinburne",
+        "folderId": "3ECFC96F66925EFA!s333e1cbfa8024920b57d5366e859227f",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/20/2026, 11:03:30 AM",
+        "status": "Incomplete",
+        "compliance": 0,
+        "totalFiles": 33,
+        "logs": [
+          {
+            "file": "Report.pdf",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T03:03:30.478Z"
+          },
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T03:03:30.478Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T03:03:30.478Z"
+          },
+          {
+            "file": "Docs",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T03:03:30.478Z"
+          },
+          {
+            "file": "Slides",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T03:03:30.478Z"
+          },
+          {
+            "file": "Data",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T03:03:30.478Z"
+          }
+        ]
+      },
+      {
+        "id": "1779247087356",
+        "auditId": "AUD-1779247087356",
+        "folder": "FYP",
+        "folderId": "3ECFC96F66925EFA!s730b846a76ca4e0682d6ebb529f5d128",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/20/2026, 11:18:07 AM",
+        "status": "Incomplete",
+        "compliance": 0,
+        "totalFiles": 12,
+        "logs": [
+          {
+            "file": "Report.pdf",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T03:18:07.352Z"
+          },
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T03:18:07.352Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T03:18:07.352Z"
+          },
+          {
+            "file": "Docs",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T03:18:07.352Z"
+          },
+          {
+            "file": "Slides",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T03:18:07.352Z"
+          },
+          {
+            "file": "Data",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T03:18:07.352Z"
+          }
+        ]
+      },
+      {
+        "id": "1779247132189",
+        "auditId": "AUD-1779247132189",
+        "folder": "FYP",
+        "folderId": "3ECFC96F66925EFA!s730b846a76ca4e0682d6ebb529f5d128",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/20/2026, 11:18:52 AM",
+        "status": "Incomplete",
+        "compliance": 0,
+        "totalFiles": 12,
+        "logs": [
+          {
+            "file": "Report.pdf",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T03:18:52.187Z"
+          },
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T03:18:52.187Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T03:18:52.187Z"
+          },
+          {
+            "file": "Docs",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T03:18:52.187Z"
+          },
+          {
+            "file": "Slides",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T03:18:52.187Z"
+          },
+          {
+            "file": "Data",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T03:18:52.187Z"
+          }
+        ]
+      },
+      {
+        "id": "1779249608503",
+        "auditId": "AUD-1779249608503",
+        "folder": "FYP",
+        "folderId": "3ECFC96F66925EFA!s730b846a76ca4e0682d6ebb529f5d128",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/20/2026, 12:00:08 PM",
+        "status": "Incomplete",
+        "compliance": 0,
+        "totalFiles": 12,
+        "logs": [
+          {
+            "file": "Report.pdf",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T04:00:08.501Z"
+          },
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T04:00:08.501Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T04:00:08.501Z"
+          },
+          {
+            "file": "Docs",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T04:00:08.502Z"
+          },
+          {
+            "file": "Slides",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T04:00:08.502Z"
+          },
+          {
+            "file": "Data",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T04:00:08.502Z"
+          }
+        ]
+      },
+      {
+        "id": "1779250261611",
+        "auditId": "AUD-1779250261611",
+        "folder": "FYP",
+        "folderId": "3ECFC96F66925EFA!s730b846a76ca4e0682d6ebb529f5d128",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/20/2026, 12:11:01 PM",
+        "status": "Incomplete",
+        "compliance": 31,
+        "totalFiles": 13,
+        "logs": [
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T04:11:01.609Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T04:11:01.609Z"
+          },
+          {
+            "file": "Docs",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T04:11:01.609Z"
+          },
+          {
+            "file": "Slides",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T04:11:01.609Z"
+          },
+          {
+            "file": "Data",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T04:11:01.609Z"
+          }
+        ]
+      },
+      {
+        "id": "1779250664052",
+        "auditId": "AUD-1779250664052",
+        "folder": "FYP",
+        "folderId": "3ECFC96F66925EFA!s730b846a76ca4e0682d6ebb529f5d128",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/20/2026, 12:17:44 PM",
+        "status": "Incomplete",
+        "compliance": 31,
+        "totalFiles": 13,
+        "logs": [
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T04:17:44.049Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-20T04:17:44.049Z"
+          },
+          {
+            "file": "Docs",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T04:17:44.049Z"
+          },
+          {
+            "file": "Slides",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T04:17:44.049Z"
+          },
+          {
+            "file": "Data",
+            "rule": "Template Missing Folder",
+            "violation": true,
+            "timestamp": "2026-05-20T04:17:44.049Z"
           }
         ]
       }

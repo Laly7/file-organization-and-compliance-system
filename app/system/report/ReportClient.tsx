@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { deleteScan } from "@/app/actions";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ReportClient({ initialReports }: { initialReports: any[] }) {
   const [reports, setReports] = useState(initialReports);
+  const router = useRouter();
 
   useEffect(() => {
   const saved = sessionStorage.getItem("lastScan");
@@ -38,6 +40,17 @@ export default function ReportClient({ initialReports }: { initialReports: any[]
         alert("Failed to delete report.");
       }
     }
+  };
+
+  const handleFix = (report: any) => {
+    sessionStorage.setItem("scanFolder", report.folder);
+    sessionStorage.setItem("scanTemplate", report.template);
+    sessionStorage.setItem("scanFolderId", report.folderId || "");
+    sessionStorage.setItem("scanTemplateId", report.templateId || "");
+    sessionStorage.setItem("lastScan", JSON.stringify({ compliance: report.compliance, id: report.id }));
+    sessionStorage.setItem("isFixingFromReport", "true");
+    
+    router.push("/system/scan/scan-result");
   };
 
   return (
@@ -143,6 +156,16 @@ export default function ReportClient({ initialReports }: { initialReports: any[]
                         />
                       </svg>
                     </Link>
+
+                    {Number(report.compliance) < 100 && (
+                      <button
+                        onClick={() => handleFix(report)}
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-yellow-50 border border-yellow-100 text-yellow-600 hover:bg-yellow-500 hover:text-white hover:border-yellow-500 transition-all duration-200 shadow-sm text-sm"
+                        title="Fix compliance issues now"
+                      >
+                        🔧
+                      </button>
+                    )}
                     
                     <button
                       onClick={() => handleDelete(report.id)}

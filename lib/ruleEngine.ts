@@ -26,6 +26,7 @@ export interface FileItem {
   id: string;
   name: string;
   path?: string;
+  isFolder?: boolean;
 }
 
 export function analyzeFiles(
@@ -76,6 +77,22 @@ export function analyzeFiles(
 
   }
 
+  const missingFolders = checkMissingFolders(
+    files,
+    template
+  );
+
+  for (const missing of missingFolders) {
+
+    logs.push({
+      file: missing,
+      rule: "Template Missing Folder",
+      violation: true,
+      timestamp: new Date().toISOString()
+    });
+
+  }
+
   return logs;
 }
 
@@ -117,16 +134,32 @@ export async function processFiles(
     });
   }
 
+  const missingFolders = checkMissingFolders(files, template);
+
+  for (const missing of missingFolders) {
+    logs.push({
+      file: missing,
+      rule: "Template Missing Folder",
+      action: "Missing folder detected",
+      timestamp: new Date().toISOString()
+    });
+  }
+
   return logs;
 }
 
 function checkRule(rule: Rule, file: FileItem): boolean {
+  if (file.isFolder) return false;
+  if (!rule.condition || typeof rule.condition !== "object") return false;
+
   switch (rule.type) {
 
     case "naming":
+      if (!rule.condition.pattern) return false;
       return !validateNaming(file.name, rule.condition.pattern);
 
     case "folder":
+      if (!rule.condition.folder) return false;
       return !file.path?.includes(rule.condition.folder);
 
     case "missing":
@@ -138,10 +171,23 @@ function checkRule(rule: Rule, file: FileItem): boolean {
 }
 
 function checkMissingFiles(files: FileItem[], template: Template) {
-  const names = files.map(f => f.name.toLowerCase());
+  const names = files.filter(f => !f.isFolder).map(f => f.name.toLowerCase());
 
   return template.requiredFiles.filter(
     req => !names.includes(req.toLowerCase())
+  );
+}
+
+function checkMissingFolders(files: FileItem[], template: Template) {
+  const folders = files
+    .filter(f => f.isFolder)
+    .map(f => f.name.toLowerCase().replace(/\/$/, ""));
+
+  return (template.requiredFolders || []).filter(
+    req => {
+      const cleanReq = req.toLowerCase().replace(/\/$/, "");
+      return !folders.includes(cleanReq);
+    }
   );
 }
 
@@ -155,6 +201,9 @@ async function executeRule(
   token: string,
   template: Template
 ) {
+  if (!rule.action || typeof rule.action !== "object" || !rule.action.type) {
+    return "No action configured";
+  }
   switch (rule.action.type) {
 
     case "rename":

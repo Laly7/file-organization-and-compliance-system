@@ -32,8 +32,42 @@ export async function getDriveChildren(token: string, folderId?: string) {
     file: !!item.file,
     folder: !!item.folder,
     path: item.parentReference?.path || "", 
-    parentId: item.parentReference?.id
+    parentId: item.parentReference?.id,
+    webUrl: item.webUrl
   }));
+}
+
+export async function getDriveFilesRecursively(token: string, folderId: string): Promise<any[]> {
+  const items = await getDriveChildren(token, folderId);
+  let allFiles: any[] = [];
+
+  for (const item of items) {
+    if (item.file) {
+      allFiles.push({
+        id: item.id,
+        name: item.name,
+        path: item.path,
+        webUrl: item.webUrl,
+        isFolder: false
+      });
+    } else if (item.folder) {
+      allFiles.push({
+        id: item.id,
+        name: item.name,
+        path: item.path,
+        webUrl: item.webUrl,
+        isFolder: true
+      });
+      try {
+        const subFolderFiles = await getDriveFilesRecursively(token, item.id);
+        allFiles.push(...subFolderFiles);
+      } catch (err) {
+        console.error(`Failed to recurse into folder ${item.name} (${item.id}):`, err);
+      }
+    }
+  }
+
+  return allFiles;
 }
 
 export async function findFolderIdByName(

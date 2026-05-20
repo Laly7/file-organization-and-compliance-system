@@ -3,12 +3,13 @@ import { getDbData, saveDbData } from "@/lib/db";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const db = await getDbData();
+  const resolvedParams = await params;
 
   const template = db.templates.find(
-    (t: any) => t.id === params.id
+    (t: any) => t.id === resolvedParams.id
   );
 
   if (!template) {
@@ -23,13 +24,14 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const db = await getDbData();
   const body = await req.json();
+  const resolvedParams = await params;
 
   const index = db.templates.findIndex(
-    (t: any) => t.id === params.id
+    (t: any) => t.id === resolvedParams.id
   );
 
   if (index === -1) {
@@ -51,12 +53,13 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const db = await getDbData();
+  const resolvedParams = await params;
 
   db.templates = db.templates.filter(
-    (t: any) => t.id !== params.id
+    (t: any) => t.id !== resolvedParams.id
   );
 
   await saveDbData(db);
