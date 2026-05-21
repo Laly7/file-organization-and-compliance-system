@@ -165,7 +165,7 @@ export default async function Dashboard() {
                                         </td>
 
                                         <td className="px-8 py-5 text-center">
-                                            <Link href={`/system/report/details?id=${scan.id}`} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 font-bold rounded-xl hover:bg-blue-600 hover:text-white transition">
+                                            <Link href={`/system/report/report-details?id=${scan.id}`} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 font-bold rounded-xl hover:bg-blue-600 hover:text-white transition">
                                                 <Eye className="w-4 h-4" />
                                                 View
                                             </Link>

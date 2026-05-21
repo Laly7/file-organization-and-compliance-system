@@ -63,7 +63,6 @@ export default function ReportClient({ initialReports }: { initialReports: any[]
         <table className="w-full text-left border-separate border-spacing-0">
           <thead>
             <tr className="bg-white text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50">
-              <th className="px-8 py-5 border-b border-gray-50">Audit ID</th>
               <th className="px-8 py-5 border-b border-gray-50">Analysis Target</th>
               <th className="px-8 py-5 border-b border-gray-50">Template Used</th>
               <th className="px-8 py-5 border-b border-gray-50 text-center">Scan Date</th>
@@ -74,19 +73,13 @@ export default function ReportClient({ initialReports }: { initialReports: any[]
           <tbody className="divide-y divide-gray-50">
             {reports.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-8 py-20 text-center text-gray-400 italic font-medium">
+                <td colSpan={5} className="px-8 py-20 text-center text-gray-400 italic font-medium">
                   No audit reports archived yet
                 </td>
               </tr>
             ) : (
               reports.map((report: any) => (
                 <tr key={report.id} className="hover:bg-blue-50/30 transition-colors group">
-                  <td className="px-8 py-5">
-                    <span className="font-mono text-[10px] text-gray-400 group-hover:text-blue-600 transition-colors">
-                      {report.auditId || `#${report.id.slice(-6)}`}
-                    </span>
-                  </td>
-
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-3">
                       <span className="text-lg opacity-40">📁</span>

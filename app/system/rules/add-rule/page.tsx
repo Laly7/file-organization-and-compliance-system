@@ -1,14 +1,8 @@
-import Link from "next/link";
-import { addRule } from "@/app/actions";
 import { redirect } from "next/navigation";
 
 export default function AddRulePage() {
-
-  const actionAdapter = async (formData: FormData) => {
-    "use server";
-    await addRule(formData);
-    redirect("/system/rules");
-  };
+  redirect("/system/rules");
+}
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -101,8 +95,3 @@ export default function AddRulePage() {
                 Deploy Protocol
               </button>
             </div>
-          </form>
-        </div>
-    </div>
-  );
-}
