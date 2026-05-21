@@ -64,9 +64,6 @@ export default function RulesClient({ initialRules }: { initialRules: any[] }) {
           </div>
 
           <div className="p-8 bg-gray-50/30 border-t border-gray-50 flex justify-end">
-            <Link href="/system/rules" className="bg-gray-100 text-gray-600 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-sm shadow-gray-200 hover:bg-gray-200 transition-all active:translate-y-0">
-              Back to Rules
-            </Link>
           </div>
         </div>
       </div>

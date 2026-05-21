@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import { graphRequest } from "@/lib/onedrive";
 
 export async function POST(req: Request) {
   try {
@@ -29,79 +30,48 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(arrayBuffer);
 
     const finalFileName = targetName || file.name;
-    
+
     // 1. Create the empty file item metadata in the folder
     const createItemUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${folderId}/children`;
-    const createItemRes = await fetch(createItemUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        name: finalFileName,
-        file: {},
-        "@microsoft.graph.conflictBehavior": "replace"
-      })
-    });
+    let createdItem: any;
 
-    if (!createItemRes.ok) {
-      const errData = await createItemRes.json().catch(() => null);
-      throw new Error(`Failed to create file metadata: ${JSON.stringify(errData)}`);
+    try {
+      createdItem = await graphRequest(session.accessToken, createItemUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: finalFileName,
+          file: {},
+          "@microsoft.graph.conflictBehavior": "replace"
+        })
+      });
+    } catch (err: any) {
+      console.error("UPLOAD CREATE ITEM ERROR:", err);
+      return NextResponse.json({ error: "Failed to create file metadata", details: err?.message || err }, { status: 500 });
     }
 
-    const createdItem = await createItemRes.json();
     const fileItemId = createdItem.id;
 
     // 2. Upload the actual content to the new item
     const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${fileItemId}/content`;
     console.log("UPLOAD URL:", uploadUrl);
 
-    const res = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-        "Content-Type": file.type || "application/octet-stream",
-        "Content-Length": buffer.length.toString()
-      },
-      body: buffer
-    });
-
-    console.log("GRAPH STATUS:", res.status);
-
-    let data = null;
-
     try {
-      data = await res.json();
-    } catch {
-      data = null;
-    }
-
-    if (!res.ok) {
-      console.error("GRAPH ERROR:", data);
-
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        fs.appendFileSync(
-          path.join(process.cwd(), 'upload-error.log'), 
-          new Date().toISOString() + " - " + JSON.stringify(data) + "\n"
-        );
-      } catch (e) {}
-
-      return NextResponse.json(
-        {
-          error: "Upload failed",
-          details: data
+      const data = await graphRequest(session.accessToken, uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type || "application/octet-stream",
+          "Content-Length": buffer.length.toString()
         },
-        { status: 500 }
-      );
-    }
+        body: buffer
+      }, 60000 /* timeout for upload */,
+      2 /* retries */);
 
-    return NextResponse.json({
-      success: true,
-      file: data
-    });
+      return NextResponse.json({ success: true, file: data });
+    } catch (err: any) {
+      console.error("GRAPH UPLOAD ERROR:", err?.message || err);
+      return NextResponse.json({ error: "Upload failed", details: err?.message || err }, { status: 500 });
+    }
 
   } catch (err: any) {
     console.error("UPLOAD API ERROR:", err);

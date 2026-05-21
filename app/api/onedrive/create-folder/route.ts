@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import { graphRequest } from "@/lib/onedrive";
 
 export async function POST(req: Request) {
   try {
@@ -23,37 +24,22 @@ export async function POST(req: Request) {
 
     const createUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${folderId}/children`;
 
-    const res = await fetch(createUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        name: folderName,
-        folder: {},
-        "@microsoft.graph.conflictBehavior": "fail"
-      })
-    });
-
-    let data = null;
     try {
-      data = await res.json();
-    } catch {
-      data = null;
-    }
+      const data = await graphRequest(session.accessToken, createUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: folderName,
+          folder: {},
+          "@microsoft.graph.conflictBehavior": "fail"
+        })
+      });
 
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: "Folder creation failed", details: data },
-        { status: res.status }
-      );
+      return NextResponse.json({ success: true, folder: data });
+    } catch (err: any) {
+      console.error("CREATE FOLDER GRAPH ERROR:", err?.message || err);
+      return NextResponse.json({ error: "Folder creation failed", details: err?.message || err }, { status: 500 });
     }
-
-    return NextResponse.json({
-      success: true,
-      folder: data
-    });
 
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

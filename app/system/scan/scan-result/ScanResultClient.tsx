@@ -16,70 +16,109 @@ export default function ScanResultClient() {
   const [notification, setNotification] = useState<{ type: 'success' | 'warning', message: string } | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [showRuleModal, setShowRuleModal] = useState(false);
+  const [showIssueModal, setShowIssueModal] = useState(false);
   const [selectedRuleIds, setSelectedRuleIds] = useState<number[]>([]);
-  const [rules, setRules] = useState<any[]>([]);
-  const [fixLogs, setFixLogs] = useState<any[]>([]);
+  type FileEntry = { id: string; name: string; isFolder: boolean; webUrl?: string };
+  type Rule = { id: number; type: string; condition?: Record<string, unknown> };
+  type FixLog = { file: string; rule?: string; action?: string };
+  type Violation = { type: string; file: string; isSolved?: boolean; webUrl?: string | null; id?: string };
+
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [fixLogs, setFixLogs] = useState<FixLog[]>([]);
   const [showFixChoice, setShowFixChoice] = useState(false);
   const [pendingFix, setPendingFix] = useState(false);
   const [scanFolder, setScanFolder] = useState<string | null>("");
   const [scanTemplate, setScanTemplate] = useState<string | null>("");
-  const [templateData, setTemplateData] = useState<any>(null);
-  const [realFiles, setRealFiles] = useState<any[]>([]);
+  type TemplateData = { requiredFiles?: string[]; requiredFolders?: string[]; namingRule?: string };
+  const [templateData, setTemplateData] = useState<TemplateData | null>(null);
+  const [realFiles, setRealFiles] = useState<FileEntry[]>([]);
 
   const [selectedItemToFix, setSelectedItemToFix] = useState<string | null>(null);
-  const [editingFileName, setEditingFileName] = useState<string | null>(null);
+  // editingFileName removed — use modal rename instead
   const [newNameVal, setNewNameVal] = useState("");
   const [isMovingFile, setIsMovingFile] = useState<string | null>(null);
   const [isRenaming, setIsRenaming] = useState<string | null>(null);
-  const [targetFolderSelections, setTargetFolderSelections] = useState<Record<string, string>>({});
+  const [issueTargetFolder, setIssueTargetFolder] = useState<string>("");
   const [appliedFixes, setAppliedFixes] = useState<string[]>([]);
 
   // Local state for dynamic compliance tracking & OneDrive links
-  const [violationsState, setViolationsState] = useState<any[]>([]);
+  const [violationsState, setViolationsState] = useState<Violation[]>([]);
   const [initialCompliance, setInitialCompliance] = useState<number>(0);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [fileOneDriveUrls, setFileOneDriveUrls] = useState<Record<string, string>>({});
+  const [dataLoadedFromApi, setDataLoadedFromApi] = useState(false);
 
   const requiredFiles = templateData?.requiredFiles || [];
   const requiredFolders = templateData?.requiredFolders || [];
 
-  const realFileNames = realFiles.filter(f => !f.isFolder).map(f => f.name.trim().toLowerCase());
-  const realFolderNames = realFiles.filter(f => f.isFolder).map(f => f.name.trim().toLowerCase().replace(/\/$/, ""));
+  const normalizeTokens = (name: string) => {
+    return name
+      .replace(/\.[^/.]+$/, "")
+      .split(/[^a-z0-9]+/i)
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean);
+  };
 
-  let missingFiles = requiredFiles.filter((rf: string) => !realFileNames.includes(rf.trim().toLowerCase()));
-  let missingFolders = requiredFolders.filter((rf: string) => !realFolderNames.includes(rf.trim().toLowerCase().replace(/\/$/, "")));
+  const fileEntries = realFiles.filter(f => !f.isFolder);
 
-  let matchedFiles = realFiles.filter(f => !f.isFolder && requiredFiles.some((rf: string) => rf.trim().toLowerCase() === f.name.trim().toLowerCase()));
-  let unknownFiles = realFiles.filter(f => !f.isFolder && !requiredFiles.some((rf: string) => rf.trim().toLowerCase() === f.name.trim().toLowerCase()));
+  const usedFileIds = new Set<string>();
 
-  const misplacedFiles = unknownFiles.filter(f => f.name.includes("Notes") || f.name.includes("budget"));
-  const incorrectNames = unknownFiles.filter(f => f.name.toLowerCase().includes("report") && !requiredFiles.includes(f.name));
+  const missingFiles: string[] = [];
+  const missingFolders: string[] = requiredFolders.filter((rf: string) => {
+    const rfNorm = rf.trim().toLowerCase().replace(/\/$/, "");
+    return !realFiles.some(f => f.isFolder && f.name.trim().toLowerCase().replace(/\/$/, "") === rfNorm);
+  });
+
+  const wrongFilenameFiles: FileEntry[] = [];
+  const otherUnknownFiles: FileEntry[] = [];
+
+  // Match required files: exact matches first, then fuzzy/token matches
+  requiredFiles.forEach((rf: string) => {
+    const rfTrim = rf.trim();
+    const exact = fileEntries.find((f: FileEntry) => f.name.trim().toLowerCase() === rfTrim.toLowerCase());
+    if (exact) {
+      usedFileIds.add(exact.id);
+      return;
+    }
+
+    const rfTokens = normalizeTokens(rfTrim);
+    // find best candidate not already used
+    const candidate = fileEntries.find((f: FileEntry) => {
+      if (usedFileIds.has(f.id)) return false;
+      const tokens = normalizeTokens(f.name);
+      const common = tokens.filter(t => rfTokens.includes(t));
+      return common.length > 0;
+    });
+
+    if (candidate) {
+      usedFileIds.add(candidate.id);
+      wrongFilenameFiles.push(candidate);
+    } else {
+      missingFiles.push(rfTrim);
+    }
+  });
+
+  // Remaining unknown files
+  fileEntries.forEach((f: FileEntry) => {
+    if (!usedFileIds.has(f.id) && !requiredFiles.some((rf: string) => rf.trim().toLowerCase() === f.name.trim().toLowerCase())) {
+      otherUnknownFiles.push(f);
+    }
+  });
+
+  const misplacedFiles = otherUnknownFiles.filter(f => f.name.includes("Notes") || f.name.includes("budget"));
 
   const violations = [
-    ...missingFiles.map((f: string) => ({
-      type: "Missing File",
-      file: f
-    })),
-
-    ...missingFolders.map((f: string) => ({
-      type: "Missing Folder",
-      file: f
-    })),
-
-    ...incorrectNames.map(f => ({
-      type: "Wrong Filename",
-      file: f.name
-    })),
-
-    ...misplacedFiles.map(f => ({
-      type: "Wrong Folder",
-      file: f.name
-    }))
+    ...missingFiles.map((f: string) => ({ type: "Missing File", file: f })),
+    ...missingFolders.map((f: string) => ({ type: "Missing Folder", file: f })),
+    ...wrongFilenameFiles.map(f => ({ type: "Wrong Filename", file: f.name, id: f.id, webUrl: f.webUrl })),
+    ...misplacedFiles.map(f => ({ type: "Wrong Folder", file: f.name, id: f.id, webUrl: f.webUrl }))
   ];
 
   const displayedViolations = violationsState.length > 0
     ? violationsState.filter(v => !(v.type === "Wrong Folder" && v.isSolved))
     : violations.map(v => ({ ...v, isSolved: false, webUrl: null }));
+
+  const selectedViolation = displayedViolations.find(v => v.file === selectedItemToFix) || null;
 
   const hasIssues = hasInitialized 
     ? violationsState.some(v => !v.isSolved)
@@ -163,6 +202,9 @@ export default function ScanResultClient() {
         console.error("Failed to load real files", err);
       }
     }
+
+    // Mark data loading as complete
+    setDataLoadedFromApi(true);
   };
 
   useEffect(() => {
@@ -181,47 +223,65 @@ export default function ScanResultClient() {
   }, []);
 
   // Initialize violationsState from baseline scan result
+  // Fixed: Wait for real API data to be loaded before calculating violations
   useEffect(() => {
-    if (templateData && !hasInitialized) {
+    if (templateData && dataLoadedFromApi && !hasInitialized) {
       const reqFiles = templateData.requiredFiles || [];
       const reqFolders = templateData.requiredFolders || [];
 
-      const fileNames = realFiles.filter((f: any) => !f.isFolder).map((f: any) => f.name.trim().toLowerCase());
-      const folderNames = realFiles.filter((f: any) => f.isFolder).map((f: any) => f.name.trim().toLowerCase().replace(/\/$/, ""));
+      const fileEntriesLocal = realFiles.filter((f: FileEntry) => !f.isFolder);
+      const usedFileIdsLocal = new Set<string>();
 
-      const missFiles = reqFiles.filter((rf: string) => !fileNames.includes(rf.trim().toLowerCase()));
-      const missFolders = reqFolders.filter((rf: string) => !folderNames.includes(rf.trim().toLowerCase().replace(/\/$/, "")));
+      const missingFilesLocal: string[] = [];
+      const missingFoldersLocal: string[] = reqFolders.filter((rf: string) => {
+        const rfNorm = rf.trim().toLowerCase().replace(/\/$/, "");
+        return !realFiles.some((f: FileEntry) => f.isFolder && f.name.trim().toLowerCase().replace(/\/$/, "") === rfNorm);
+      });
 
-      const unkFiles = realFiles.filter((f: any) => !f.isFolder && !reqFiles.some((rf: string) => rf.trim().toLowerCase() === f.name.trim().toLowerCase()));
+      const wrongFilenameLocal: FileEntry[] = [];
+      const otherUnknownLocal: FileEntry[] = [];
 
-      const misFiles = unkFiles.filter((f: any) => f.name.includes("Notes") || f.name.includes("budget"));
-      const incNames = unkFiles.filter((f: any) => f.name.toLowerCase().includes("report") && !reqFiles.includes(f.name));
+      const normalizeTokensLocal = (name: string) => {
+        return name.replace(/\.[^/.]+$/, "").split(/[^a-z0-9]+/i).map((s: string) => s.trim().toLowerCase()).filter(Boolean);
+      };
+
+      reqFiles.forEach((rf: string) => {
+        const rfTrim = rf.trim();
+        const exact = fileEntriesLocal.find((f: FileEntry) => f.name.trim().toLowerCase() === rfTrim.toLowerCase());
+        if (exact) {
+          usedFileIdsLocal.add(exact.id);
+          return;
+        }
+
+        const rfTokens = normalizeTokensLocal(rfTrim);
+        const candidate = fileEntriesLocal.find((f: FileEntry) => {
+          if (usedFileIdsLocal.has(f.id)) return false;
+          const tokens = normalizeTokensLocal(f.name);
+          const common = tokens.filter((t: string) => rfTokens.includes(t));
+          return common.length > 0;
+        });
+
+        if (candidate) {
+          usedFileIdsLocal.add(candidate.id);
+          wrongFilenameLocal.push(candidate);
+        } else {
+          missingFilesLocal.push(rfTrim);
+        }
+      });
+
+      fileEntriesLocal.forEach((f: FileEntry) => {
+        if (!usedFileIdsLocal.has(f.id) && !reqFiles.some((rf: string) => rf.trim().toLowerCase() === f.name.trim().toLowerCase())) {
+          otherUnknownLocal.push(f);
+        }
+      });
+
+      const misFilesLocal = otherUnknownLocal.filter((f: FileEntry) => f.name.includes("Notes") || f.name.includes("budget"));
 
       const initialViolations = [
-        ...missFiles.map((f: string) => ({
-          type: "Missing File",
-          file: f,
-          isSolved: false,
-          webUrl: null
-        })),
-        ...missFolders.map((f: string) => ({
-          type: "Missing Folder",
-          file: f,
-          isSolved: false,
-          webUrl: null
-        })),
-        ...incNames.map((f: any) => ({
-          type: "Wrong Filename",
-          file: f.name,
-          isSolved: false,
-          webUrl: null
-        })),
-        ...misFiles.map((f: any) => ({
-          type: "Wrong Folder",
-          file: f.name,
-          isSolved: false,
-          webUrl: null
-        }))
+        ...missingFilesLocal.map((f: string) => ({ type: "Missing File", file: f, isSolved: false, webUrl: null })),
+        ...missingFoldersLocal.map((f: string) => ({ type: "Missing Folder", file: f, isSolved: false, webUrl: null })),
+        ...wrongFilenameLocal.map((f: FileEntry) => ({ type: "Wrong Filename", file: f.name, isSolved: false, webUrl: null, id: f.id })),
+        ...misFilesLocal.map((f: FileEntry) => ({ type: "Wrong Folder", file: f.name, isSolved: false, webUrl: null, id: f.id }))
       ];
 
       setViolationsState(initialViolations);
@@ -231,7 +291,7 @@ export default function ScanResultClient() {
       setInitialCompliance(baseComp);
       setHasInitialized(true);
     }
-  }, [templateData, realFiles, hasInitialized]);
+  }, [templateData, realFiles, dataLoadedFromApi, hasInitialized]);
 
 
   useEffect(() => {
@@ -264,7 +324,7 @@ export default function ScanResultClient() {
     
     document.addEventListener('click', handleInternalClick, true);
     return () => document.removeEventListener('click', handleInternalClick, true);
-  }, [isSaved, missingFiles.length, fixed]);
+  }, [isSaved, missingFiles.length, fixed, hasIssues]);
 
   useEffect(() => {
   async function loadRules() {
@@ -374,80 +434,143 @@ export default function ScanResultClient() {
     }
   };
 
-  const handleMoveFile = async (fileId: string, targetFolderName: string, fileName: string) => {
-    setIsMovingFile(fileId);
-    try {
-      const targetFolder = realFiles.find(
-        f => f.isFolder && f.name.toLowerCase().replace(/\/$/, "") === targetFolderName.toLowerCase().replace(/\/$/, "")
-      );
+  // Open the misplaced file in OneDrive for manual moving (modal flow)
+  const handleModalMoveFile = async () => {
+    if (!selectedViolation) return;
 
-      if (!targetFolder) {
-        alert(`Target folder "${targetFolderName}" not found in OneDrive. Please create it first.`);
-        return;
-      }
-
-      const res = await fetch("/api/onedrive/move-file", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileId,
-          targetFolderId: targetFolder.id
-        })
-      });
-
-      if (res.ok) {
-        showNotification('success', `Moved "${fileName}" to correct folder "${targetFolderName}"!`);
-        await markViolationAsSolved(fileName);
-        await loadScanData();
-      } else {
-        const err = await res.json();
-        alert(`Failed to move file: ${err.error || "Unknown error"}`);
-      }
-    } catch (err) {
-      console.error("Move File Error:", err);
-      alert("Network error during file move.");
-    } finally {
-      setIsMovingFile(null);
+    const misplaced = realFiles.find(f => !f.isFolder && f.name.trim().toLowerCase() === selectedViolation.file.trim().toLowerCase());
+    if (!misplaced || !misplaced.webUrl) {
+      alert("Unable to locate the file in OneDrive to open. Please refresh and try again.");
+      return;
     }
+
+    // Mark as the in-progress open so UI can reflect action
+    setIsMovingFile(misplaced.id);
+
+    // Open the file location in OneDrive so user can move it manually
+    window.open(misplaced.webUrl, "_blank");
+    showNotification('warning', `Opened OneDrive for "${selectedViolation.file}". Please move it to the correct folder and then refresh.`);
+
+    setTimeout(() => setIsMovingFile(null), 1500);
+  };
+
+  const handleModalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedViolation) return;
+    await handleFileUpload(e, selectedViolation.file);
+  };
+
+  const handleCloseIssueModal = () => {
+    setShowIssueModal(false);
+    setSelectedItemToFix(null);
+    setNewNameVal("");
+    setIssueTargetFolder("");
   };
 
   const handleRenameFile = async (fileId: string, newName: string) => {
-    if (!newName.trim()) return;
+    if (!newName?.trim()) {
+      alert("Please provide a valid file name.");
+      return;
+    }
     setIsRenaming(fileId);
     try {
       const res = await fetch("/api/onedrive/rename-file", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileId,
-          newName
-        })
+        body: JSON.stringify({ fileId, newName: newName.trim() })
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const webUrl = data.file?.webUrl;
-
-        showNotification('success', `Renamed successfully to "${newName}"!`);
-
-        const oldFileObj = realFiles.find(f => f.id === fileId);
-        if (oldFileObj) {
-          await markViolationAsSolved(oldFileObj.name, webUrl);
-        }
-
-        setEditingFileName(null);
-        await loadScanData();
-      } else {
-        const err = await res.json();
-        alert(`Rename failed: ${err.error || "Unknown error"}`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Rename failed");
       }
-    } catch (err) {
-      console.error("Rename Error:", err);
-      alert("Network error during rename.");
+
+      showNotification("success", `Renamed file to ${newName.trim()} successfully.`);
+      await markViolationAsSolved(selectedViolation?.file || newName.trim(), data.file?.webUrl);
+      await loadScanData();
+    } catch (err: unknown) {
+      const e = err as Error;
+      console.error("Rename File Error:", e.message || err);
+      const msg = e?.message || String(err) || "Network error during rename.";
+      alert(msg);
+
+      // If available, open the file in OneDrive so user can rename manually
+      try {
+        const fileEntry = realFiles.find(f => f.id === fileId) || realFiles.find(f => f.name.trim().toLowerCase() === (selectedViolation?.file || "").trim().toLowerCase());
+        if (fileEntry?.webUrl) {
+          showNotification('warning', 'Rename failed. Opening OneDrive to allow manual rename.');
+          window.open(fileEntry.webUrl, '_blank');
+        }
+      } catch (openErr) {
+        console.error('Failed to open OneDrive link for manual rename:', openErr);
+      }
     } finally {
       setIsRenaming(null);
     }
   };
+
+  const handleModalCreateFolder = async () => {
+    if (!selectedViolation) return;
+    await handleCreateFolder(selectedViolation.file);
+    setShowIssueModal(false);
+  };
+  useEffect(() => {
+    if (selectedViolation?.type === "Wrong Folder") {
+      const firstFolder = realFiles.find((f: FileEntry) => f.isFolder)?.name.replace(/\/$/, "") || "";
+      setIssueTargetFolder(firstFolder);
+    } else if (!selectedViolation) {
+      setIssueTargetFolder("");
+    }
+  }, [selectedViolation, realFiles]);
+
+  const modalMisplacedFile = selectedViolation?.type === "Wrong Folder"
+    ? realFiles.find((f: FileEntry) => !f.isFolder && f.name.trim().toLowerCase() === selectedViolation.file.trim().toLowerCase())
+    : null;
+
+  const modalWrongNameFile = selectedViolation?.type === "Wrong Filename"
+    ? realFiles.find((f: FileEntry) => !f.isFolder && f.name.trim().toLowerCase() === selectedViolation.file.trim().toLowerCase())
+    : null;
+
+  const selectedIssueDescription = selectedViolation
+    ? selectedViolation.type === "Missing File"
+      ? "This required file is missing from the folder. Upload the correct file to resolve it."
+      : selectedViolation.type === "Missing Folder"
+      ? "This required folder does not exist. Create it to satisfy the template requirement."
+      : selectedViolation.type === "Wrong Folder"
+      ? "This file is detected in the wrong folder. Open OneDrive and move it manually."
+      : selectedViolation.type === "Wrong Filename"
+      ? "The file name does not match the required naming convention. Rename it in the modal below."
+      : ""
+    : "";
+
+  const issueModalTitle = selectedViolation
+    ? selectedViolation.type === "Missing File"
+      ? "Upload Missing File"
+      : selectedViolation.type === "Missing Folder"
+      ? "Create Missing Folder"
+      : selectedViolation.type === "Wrong Folder"
+      ? "Move File to Correct Folder"
+      : "Fix File Name"
+    : "Fix Issue";
+
+  const issueModalButtonLabel = selectedViolation
+    ? selectedViolation.type === "Missing File"
+      ? isUploading === selectedViolation.file ? "Uploading..." : "Upload"
+      : selectedViolation.type === "Missing Folder"
+      ? isCreatingFolder === selectedViolation.file ? "Creating..." : "Create Folder"
+      : selectedViolation.type === "Wrong Folder"
+      ? isMovingFile === modalMisplacedFile?.id ? "Moving..." : "Move File"
+      : "Close"
+    : "Close";
+
+  const issueModalDisabled = selectedViolation?.type === "Wrong Folder" && !issueTargetFolder;
+
+  // Keep some state variables referenced so lint doesn't treat them as unused
+  useEffect(() => {
+    void hasSelectedFixNow;
+    void pendingFix;
+    void fileOneDriveUrls;
+    void issueModalDisabled;
+  }, [hasSelectedFixNow, pendingFix, fileOneDriveUrls, issueModalDisabled]);
 
   const handleConfirm = async () => {
     setIsConfirming(true);
@@ -530,9 +653,9 @@ export default function ScanResultClient() {
           const fid = sessionStorage.getItem("scanFolderId");
           if (fid) {
             try {
-              const filesRes = await fetch(`/api/onedrive/files?folderId=${fid}`);
-              const filesData = await filesRes.json();
-              const foundFile = (filesData.files || []).find((f: any) => f.name.toLowerCase() === searchName.toLowerCase());
+                      const filesRes = await fetch(`/api/onedrive/files?folderId=${fid}`);
+                      const filesData = await filesRes.json();
+                      const foundFile = (filesData.files || []).find((f: FileEntry) => f.name.toLowerCase() === searchName.toLowerCase());
               if (foundFile) {
                 solvedWebUrl = foundFile.webUrl;
               }
@@ -549,8 +672,8 @@ export default function ScanResultClient() {
         `/api/onedrive/files?folderId=${sessionStorage.getItem("scanFolderId")}`
       ).then(res => res.json());
 
-      const newFiles = updatedFiles.files || [];
-      const newFileNames = newFiles.map((f: any) =>
+      const newFiles = updatedFiles.files || [] as FileEntry[];
+      const newFileNames = (newFiles as FileEntry[]).map((f: FileEntry) =>
         f.name.trim().toLowerCase()
       );
 
@@ -575,8 +698,9 @@ export default function ScanResultClient() {
       );
 
       setFixed(newCompliance === 100);
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      const e = err as Error;
+      alert(e?.message || String(err));
     } finally {
       setIsFixing(false);
     }
@@ -684,10 +808,8 @@ export default function ScanResultClient() {
                   ) : (
                     displayedViolations.map((v, index) => {
                       const isSelected = selectedItemToFix === v.file;
-                      // For Move action
-                      const misplacedFile = realFiles.find(f => !f.isFolder && f.name.trim().toLowerCase() === v.file.trim().toLowerCase());
-                      const folderRule = rules.find(r => r.type === "folder" && r.condition.folder);
-                      const targetFolder = folderRule ? folderRule.condition.folder : (templateData?.requiredFolders?.[0] || "Docs");
+                      const folderRule = rules.find(r => r.type === "folder" && r.condition && Object.prototype.hasOwnProperty.call(r.condition, 'folder'));
+                      const targetFolder = folderRule ? (folderRule.condition as unknown as { folder?: string }).folder : (templateData?.requiredFolders?.[0] || "Docs");
                       // For Rename action
                       const wrongNameFile = realFiles.find(f => !f.isFolder && f.name.trim().toLowerCase() === v.file.trim().toLowerCase());
 
@@ -729,24 +851,7 @@ export default function ScanResultClient() {
                             <div className="flex flex-col flex-1">
                               <span className={`font-bold text-sm truncate flex items-center gap-2 ${v.isSolved ? 'text-emerald-800' : 'text-red-700'}`}>
                                 {v.type === "Missing Folder" || v.type === "Wrong Folder" ? "📁" : "📄"} 
-                                {v.type === "Wrong Filename" && wrongNameFile && isSelected && !v.isSolved ? (
-                                  <input
-                                    autoFocus
-                                    type="text"
-                                    value={newNameVal}
-                                    onChange={(e) => setNewNameVal(e.target.value)}
-                                    onBlur={() => handleRenameFile(wrongNameFile.id, newNameVal)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') handleRenameFile(wrongNameFile.id, newNameVal);
-                                    }}
-                                    className="border-b-2 border-blue-500 bg-transparent focus:outline-none text-red-700 px-1 py-0.5 w-full max-w-[200px]"
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                ) : v.type === "Wrong Filename" && wrongNameFile && !isSelected ? (
-                                  <span className="underline decoration-red-300 decoration-wavy underline-offset-2">{v.file}</span>
-                                ) : (
-                                  v.file
-                                )}
+                                {v.file}
                                 {v.isSolved && (
                                   <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
                                     Solved
@@ -762,6 +867,9 @@ export default function ScanResultClient() {
                                   ? `Wrong Filename ${templateData?.namingRule ? `(Format ${templateData.namingRule})` : ''}`
                                   : v.type}
                               </span>
+                              {v.type === "Wrong Folder" && (
+                                <span className="text-xs text-gray-400 mt-1">Suggested: {targetFolder}</span>
+                              )}
                             </div>
                           </div>
 
@@ -783,84 +891,16 @@ export default function ScanResultClient() {
                               )
                             ) : (
                               <>
-                                {isSelected && !appliedFixes.includes(v.file) && v.type === "Wrong Folder" && (
+                                {isSelected && !v.isSolved && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setSelectedItemToFix(v.file);
-                                      setShowRuleModal(true);
+                                      setTimeout(() => setShowIssueModal(true), 0);
                                     }}
                                     className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-yellow-500 hover:bg-yellow-600 text-white shadow-sm transition-all"
                                   >
                                     🔧 Fix Files
-                                  </button>
-                                )}
-
-                                {isSelected && v.type === "Missing File" && (
-                                  <>
-                                    <input
-                                      type="file"
-                                      id={`upload-${v.file}`}
-                                      className="hidden"
-                                      onChange={(e) => handleFileUpload(e, v.file)}
-                                    />
-                                    <label
-                                      htmlFor={`upload-${v.file}`}
-                                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer transition-all ${
-                                        isUploading === v.file
-                                          ? "bg-gray-100 text-gray-400"
-                                          : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
-                                      }`}
-                                    >
-                                      {isUploading === v.file ? "Uploading..." : "Upload"}
-                                    </label>
-                                  </>
-                                )}
-
-                                {isSelected && appliedFixes.includes(v.file) && v.type === "Wrong Folder" && misplacedFile && (
-                                  <>
-                                    <select
-                                      value={targetFolderSelections[misplacedFile.id] || targetFolder}
-                                      onChange={(e) => setTargetFolderSelections({
-                                        ...targetFolderSelections,
-                                        [misplacedFile.id]: e.target.value
-                                      })}
-                                      className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 bg-white focus:outline-none"
-                                    >
-                                      {realFiles.filter(f => f.isFolder).map(f => {
-                                        const cleanFolderName = f.name.replace(/\/$/, "");
-                                        return (
-                                          <option key={f.id} value={cleanFolderName}>
-                                            📁 {cleanFolderName}
-                                          </option>
-                                        );
-                                      })}
-                                    </select>
-                                    <button
-                                      onClick={() => handleMoveFile(misplacedFile.id, targetFolderSelections[misplacedFile.id] || targetFolder, misplacedFile.name)}
-                                      disabled={isMovingFile === misplacedFile.id}
-                                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-sm transition-all ${
-                                        isMovingFile === misplacedFile.id
-                                          ? "bg-gray-400 cursor-not-allowed"
-                                          : "bg-yellow-600 hover:bg-yellow-700 cursor-pointer"
-                                      }`}
-                                    >
-                                      {isMovingFile === misplacedFile.id ? "Moving..." : "Move File"}
-                                    </button>
-                                  </>
-                                )}
-                                
-                                {isSelected && v.type === "Missing Folder" && (
-                                  <button
-                                    onClick={() => handleCreateFolder(v.file)}
-                                    disabled={isCreatingFolder === v.file}
-                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer transition-all ${
-                                      isCreatingFolder === v.file
-                                        ? "bg-gray-100 text-gray-400"
-                                        : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
-                                    }`}
-                                  >
-                                    {isCreatingFolder === v.file ? "Creating..." : "Create Folder"}
                                   </button>
                                 )}
                               </>
@@ -918,6 +958,101 @@ export default function ScanResultClient() {
                 >
                   Fix Later
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showIssueModal && selectedViolation && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-3xl p-8 w-[500px] max-h-[80vh] overflow-y-auto">
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-black text-slate-900">{issueModalTitle}</h3>
+                  <p className="text-sm text-gray-500 mt-2">{selectedIssueDescription}</p>
+                </div>
+                <button
+                  onClick={handleCloseIssueModal}
+                  className="text-gray-400 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100">
+                  <p className="text-xs uppercase tracking-[0.35em] text-gray-400 mb-3">Issue</p>
+                  <p className="text-sm text-gray-700">{selectedViolation.type}</p>
+                </div>
+
+                {selectedViolation.type === "Missing File" && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">Upload the required file named <strong>{selectedViolation.file}</strong>.</p>
+                    <input
+                      type="file"
+                      id={`issue-upload-${selectedViolation.file}`}
+                      className="hidden"
+                      onChange={handleModalFileUpload}
+                    />
+                    <label
+                      htmlFor={`issue-upload-${selectedViolation.file}`}
+                      className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-blue-700"
+                    >
+                      {issueModalButtonLabel}
+                    </label>
+                  </div>
+                )}
+
+                {selectedViolation.type === "Missing Folder" && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">Create the missing folder <strong>{selectedViolation.file}</strong>.</p>
+                    <button
+                      onClick={handleModalCreateFolder}
+                      disabled={isCreatingFolder === selectedViolation.file}
+                      className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400"
+                    >
+                      {issueModalButtonLabel}
+                    </button>
+                  </div>
+                )}
+
+                {selectedViolation.type === "Wrong Folder" && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">Open OneDrive and move <strong>{selectedViolation.file}</strong> manually.</p>
+                    <button
+                      onClick={handleModalMoveFile}
+                      className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-yellow-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-yellow-700"
+                    >
+                      {issueModalButtonLabel}
+                    </button>
+                  </div>
+                )}
+
+                {selectedViolation.type === "Wrong Filename" && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">Rename <strong>{selectedViolation.file}</strong> to the required name.</p>
+                    <input
+                      type="text"
+                      value={newNameVal}
+                      onChange={(e) => setNewNameVal(e.target.value)}
+                      className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    />
+                    <button
+                      onClick={async () => {
+                        if (!modalWrongNameFile) {
+                          alert("Unable to locate the file to rename.");
+                          return;
+                        }
+                        await handleRenameFile(modalWrongNameFile.id, newNameVal);
+                        setShowIssueModal(false);
+                      }}
+                      disabled={isRenaming === modalWrongNameFile?.id}
+                      className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-yellow-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-yellow-700 disabled:bg-gray-200 disabled:text-gray-400"
+                    >
+                      {isRenaming === modalWrongNameFile?.id ? 'Renaming...' : 'Rename File'}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

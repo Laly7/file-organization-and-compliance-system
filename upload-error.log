@@ -1,3 +1,9 @@
 2026-05-20T03:23:16.471Z - {"error":{"code":"itemNotFound","message":"Item not found","innerError":{"date":"2026-05-20T03:23:17","request-id":"9329fec2-53cf-42a4-b651-6ddfe550e517","client-request-id":"9329fec2-53cf-42a4-b651-6ddfe550e517"}}}
 2026-05-20T03:27:12.732Z - EXCEPTION: Failed to create file metadata: {"error":{"code":"accessDenied","message":"Access denied","innerError":{"date":"2026-05-20T03:27:13","request-id":"d440a011-7279-43bf-bbc1-a606c944b922","client-request-id":"d440a011-7279-43bf-bbc1-a606c944b922"}}}
 2026-05-20T03:30:57.702Z - EXCEPTION: Failed to create file metadata: {"error":{"code":"accessDenied","message":"Access denied","innerError":{"date":"2026-05-20T03:30:58","request-id":"60e8f34b-8261-468a-b3e2-d7e79b3cb474","client-request-id":"60e8f34b-8261-468a-b3e2-d7e79b3cb474"}}}
+2026-05-21T15:41:56.836Z - EXCEPTION: fetch failed
+2026-05-21T15:42:15.219Z - EXCEPTION: fetch failed
+2026-05-21T15:42:39.434Z - EXCEPTION: fetch failed
+2026-05-21T15:43:16.471Z - EXCEPTION: fetch failed
+2026-05-21T15:45:44.441Z - EXCEPTION: Failed to create file metadata: {"error":{"code":"InvalidAuthenticationToken","message":"IDX14100: JWT is not well formed, there are no dots (.).\nThe token needs to be in JWS or JWE Compact Serialization Format. (JWS): 'EncodedHeader.EncodedPayload.EncodedSignature'. (JWE): 'EncodedProtectedHeader.EncodedEncryptedKey.EncodedInitializationVector.EncodedCiphertext.EncodedAuthenticationTag'.","innerError":{"date":"2026-05-21T15:45:44","request-id":"833c1249-43ca-4197-8e61-efe7677588ee","client-request-id":"833c1249-43ca-4197-8e61-efe7677588ee"}}}
+2026-05-21T15:48:02.872Z - EXCEPTION: fetch failed
