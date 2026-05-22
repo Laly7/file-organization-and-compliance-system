@@ -1,3 +1,1 @@
-# File Organization and Compliance System
-
-After you run the code (npm run dev): http://localhost:3000/auth/login
+https://github.com/Laly7/file-organization-and-compliance-system.git
