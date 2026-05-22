@@ -295,7 +295,7 @@ export default function ScanClient() {
                     </p>
                     
                     <p className="text-[10px] text-gray-500 break-all leading-none">
-                      ID: {selectedFolder.id}
+                      ID: {selectedFolder.id.slice(0, 10)}
                     </p>
                   </div>
                   
