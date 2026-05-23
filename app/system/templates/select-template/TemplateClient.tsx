@@ -157,7 +157,7 @@ export default function TemplateClient({ templates }: { templates: any[] }) {
                               </div>
                         
                               <div>
-                                 <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Optional Tracking</p>
+                                 <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Optional Files</p>
                                  <div className="flex flex-wrap gap-2">
                                     {activeTemplate.optionalFiles.map((f: string, i: number) => (
                                        <span key={i} className="px-3 py-1.5 bg-gray-50 border border-gray-100 text-gray-500 rounded-lg text-xs font-bold">{f}</span>

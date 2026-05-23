@@ -75,7 +75,7 @@ export default function EditTemplateClient({ template }: { template: any }) {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Optional Tracking</label>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Optional Files</label>
                 <input
                   name="optionalFiles"
                   type="text"
