@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDbData, saveDbData } from "@/lib/db";
+import { randomUUID } from "crypto";
 
 export async function GET() {
   const db = await getDbData();
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
   const db = await getDbData();
 
   const newRule = {
-    id: Date.now(),
+    id: randomUUID(),
     name: body.name,
     condition: body.condition,
     template: body.template || "",

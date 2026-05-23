@@ -10,23 +10,58 @@ export default function ReportClient({ initialReports }: { initialReports: any[]
   const router = useRouter();
 
   useEffect(() => {
-  const saved = sessionStorage.getItem("lastScan");
+    const saved = sessionStorage.getItem("lastScan");
+    const newCloned = sessionStorage.getItem("newClonedReport");
 
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
+    if (newCloned) {
+      try {
+        const clonedReport = JSON.parse(newCloned);
+        if (clonedReport?.id && clonedReport?.folder && clonedReport?.template) {
+          setReports((prev) => {
+            const existingIndex = prev.findIndex((r) => r.id === clonedReport.id);
+            if (existingIndex === -1) {
+              sessionStorage.removeItem("newClonedReport");
+              return [clonedReport, ...prev];
+            }
 
-      setReports((prev) =>
-        prev.map((r) =>
-          r.id === parsed.id
-            ? { ...r, compliance: parsed.compliance }
-            : r
-        )
-      );
-    } catch (err) {
-      console.error("Failed to parse lastScan", err);
+            const updatedReports = [...prev];
+            updatedReports[existingIndex] = clonedReport;
+            sessionStorage.removeItem("newClonedReport");
+            return updatedReports;
+          });
+        }
+      } catch (err) {
+        console.error("Failed to parse newClonedReport", err);
+        sessionStorage.removeItem("newClonedReport");
+      }
     }
-  }
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+
+        setReports((prev) => {
+          if (!parsed?.id || parsed?.compliance == null) return prev;
+
+          const hasExisting = prev.some((r) => r.id === parsed.id);
+          if (hasExisting) {
+            return prev.map((r) =>
+              r.id === parsed.id
+                ? { ...r, compliance: parsed.compliance }
+                : r
+            );
+          }
+
+          if (parsed.folder && parsed.template && parsed.date) {
+            return [...prev, parsed];
+          }
+
+          return prev;
+        });
+      } catch (err) {
+        console.error("Failed to parse lastScan", err);
+      }
+    }
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -47,8 +82,9 @@ export default function ReportClient({ initialReports }: { initialReports: any[]
     sessionStorage.setItem("scanTemplate", report.template);
     sessionStorage.setItem("scanFolderId", report.folderId || "");
     sessionStorage.setItem("scanTemplateId", report.templateId || "");
-    sessionStorage.setItem("lastScan", JSON.stringify({ compliance: report.compliance, id: report.id }));
+    sessionStorage.setItem("lastScan", JSON.stringify(report));
     sessionStorage.setItem("isFixingFromReport", "true");
+    sessionStorage.removeItem("fixReportCloneId");
     
     router.push("/system/scan/scan-result");
   };

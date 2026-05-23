@@ -16,9 +16,9 @@ export default function ScanResultClient() {
   const [notification, setNotification] = useState<{ type: 'success' | 'warning', message: string } | null>(null);
   const [showRuleModal, setShowRuleModal] = useState(false);
   const [showIssueModal, setShowIssueModal] = useState(false);
-  const [selectedRuleIds, setSelectedRuleIds] = useState<number[]>([]);
+  const [selectedRuleIds, setSelectedRuleIds] = useState<string[]>([]);
   type FileEntry = { id: string; name: string; isFolder: boolean; webUrl?: string };
-  type Rule = { id: number; name: string; type: string; condition?: Record<string, unknown> };
+  type Rule = { id: string; name: string; type: string; condition?: Record<string, unknown> };
   type FixLog = { file: string; rule?: string; action?: string };
   type Violation = { type: string; file: string; expected?: string; isSolved?: boolean; webUrl?: string | null; id?: string };
 
@@ -72,17 +72,27 @@ export default function ScanResultClient() {
   const wrongFilenameFiles: Array<{ entry: FileEntry; expected: string }> = [];
   const otherUnknownFiles: FileEntry[] = [];
 
-  // Match required files: exact matches first, then fuzzy/token matches
+  // Match required files: exact case-sensitive matches first, then case-insensitive, then fuzzy/token matches
   requiredFiles.forEach((rf: string) => {
     const rfTrim = rf.trim();
-    const exact = fileEntries.find((f: FileEntry) => f.name.trim().toLowerCase() === rfTrim.toLowerCase());
-    if (exact) {
-      usedFileIds.add(exact.id);
+    
+    // First check for exact case-sensitive match
+    const exactCaseSensitive = fileEntries.find((f: FileEntry) => f.name.trim() === rfTrim);
+    if (exactCaseSensitive) {
+      usedFileIds.add(exactCaseSensitive.id);
       return;
     }
 
+    // Then check for case-insensitive match (wrong case)
+    const exactCaseInsensitive = fileEntries.find((f: FileEntry) => !usedFileIds.has(f.id) && f.name.trim().toLowerCase() === rfTrim.toLowerCase());
+    if (exactCaseInsensitive) {
+      usedFileIds.add(exactCaseInsensitive.id);
+      wrongFilenameFiles.push({ entry: exactCaseInsensitive, expected: rfTrim });
+      return;
+    }
+
+    // Finally try token-based matching
     const rfTokens = normalizeTokens(rfTrim);
-    // find best candidate not already used
     const candidate = fileEntries.find((f: FileEntry) => {
       if (usedFileIds.has(f.id)) return false;
       const tokens = normalizeTokens(f.name);
@@ -138,40 +148,114 @@ export default function ScanResultClient() {
     : (savedScan?.compliance ?? 0);
 
   const markViolationAsSolved = async (fileNameOrFolderName: string, webUrl?: string) => {
+    const saved = JSON.parse(sessionStorage.getItem("lastScan") || "{}");
+    const isFixingFromReport = sessionStorage.getItem("isFixingFromReport") === "true";
+    const existingCloneId = sessionStorage.getItem("fixReportCloneId");
+    const originalScanId = saved?.id;
+
+    let targetId = existingCloneId || originalScanId;
+    let updatedScan = { ...saved, compliance: 0 };
+
+    // Use functional state update to ensure we operate on freshest violationsState
+    let updatedViolations: typeof violationsState = [];
     setViolationsState(prev => {
-      const updated = prev.map(v => {
+      updatedViolations = prev.map(v => {
         if (v.file.trim().toLowerCase() === fileNameOrFolderName.trim().toLowerCase()) {
           return { ...v, isSolved: true, webUrl: webUrl || v.webUrl };
         }
         return v;
       });
-
-      const solved = updated.filter(v => v.isSolved).length;
-      const total = updated.length;
-      const newScore = total > 0
-        ? Math.min(100, Math.round(initialCompliance + (100 - initialCompliance) * (solved / total)))
-        : 100;
-
-      const saved = JSON.parse(sessionStorage.getItem("lastScan") || "{}");
-      const updatedScan = { ...saved, compliance: newScore };
-      sessionStorage.setItem("lastScan", JSON.stringify(updatedScan));
-
-      if (saved?.id) {
-        updateScanCompliance(saved.id, newScore).catch(err => {
-          console.error("Failed to update scan compliance in DB:", err);
-        });
-      }
-
-      if (newScore === 100) {
-        setFixed(true);
-      }
-
-      return updated;
+      return updatedViolations;
     });
+
+    const solved = updatedViolations.filter(v => v.isSolved).length;
+    const total = updatedViolations.length;
+
+    // Recalculate compliance based on actual files in the folder (preferred source of truth)
+    let newScore = 100;
+    try {
+      const fid = sessionStorage.getItem("scanFolderId");
+      if (fid) {
+        const res = await fetch(`/api/onedrive/files?folderId=${fid}`);
+        const data = await res.json();
+        const currentFiles: FileEntry[] = data.files || [];
+        const fileNames = currentFiles.map(f => f.name.trim().toLowerCase());
+        const reqCount = requiredFiles.length || 0;
+        if (reqCount === 0) {
+          newScore = 100;
+        } else {
+          const satisfied = requiredFiles.filter(rf => fileNames.includes(rf.trim().toLowerCase())).length;
+          newScore = Math.round((satisfied / reqCount) * 100);
+        }
+      } else {
+        // Fallback to violation-based percentage if folder id missing
+        newScore = total > 0 ? Math.round(( (total - (total - solved)) / total) * 100) : 100;
+      }
+    } catch (err) {
+      console.error("Error computing compliance from files:", err);
+      newScore = total > 0 ? Math.min(100, Math.round(initialCompliance + (100 - initialCompliance) * (solved / total))) : 100;
+    }
+
+    if (isFixingFromReport && originalScanId) {
+      if (!existingCloneId) {
+        try {
+          const response = await fetch("/api/scans/clone", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: originalScanId, compliance: newScore })
+          });
+
+          const clone = await response.json();
+          if (response.ok && clone?.id) {
+            targetId = clone.id;
+            updatedScan = { ...clone, compliance: newScore };
+            sessionStorage.setItem("fixReportCloneId", clone.id);
+            sessionStorage.setItem("newClonedReport", JSON.stringify(updatedScan));
+          } else {
+            console.error("Failed to clone scan record:", clone?.error || "Unknown error");
+            targetId = undefined;
+          }
+        } catch (err) {
+          console.error("Failed to clone report record:", err);
+          targetId = undefined;
+        }
+      } else {
+        targetId = existingCloneId;
+      }
+    }
+
+    if (!updatedScan.id && saved?.id) {
+      updatedScan = { ...updatedScan, ...saved };
+    }
+
+    if (targetId) {
+      updatedScan = { ...updatedScan, id: targetId, compliance: newScore };
+    } else {
+      updatedScan = { ...updatedScan, compliance: newScore };
+    }
+
+    sessionStorage.setItem("lastScan", JSON.stringify(updatedScan));
+
+    if (isFixingFromReport && targetId) {
+      sessionStorage.setItem("newClonedReport", JSON.stringify(updatedScan));
+    }
+
+    if (targetId) {
+      updateScanCompliance(targetId, newScore).catch(err => {
+        console.error("Failed to update scan compliance in DB:", err);
+      });
+    }
 
     if (webUrl) {
       setFileOneDriveUrls(prev => ({ ...prev, [fileNameOrFolderName]: webUrl }));
     }
+
+    setViolationsState(updatedViolations);
+    if (newScore === 100) {
+      setFixed(true);
+    }
+
+    return updatedViolations;
   };
 
   const loadScanData = async () => {
@@ -340,10 +424,6 @@ export default function ScanResultClient() {
 
         showNotification('success', `File "${file.name}" uploaded successfully!`);
 
-        if (webUrl) {
-          window.open(webUrl, "_blank");
-        }
-
         await markViolationAsSolved(targetName, webUrl);
         await loadScanData();
       } else {
@@ -397,12 +477,35 @@ export default function ScanResultClient() {
     }
   };
 
-  // Prompt user to move file, but don't auto-open anything
-  const handleModalMoveFile = () => {
+  // Open the folder in file explorer so user can manually move the file
+  const handleModalMoveFile = async () => {
     if (!selectedViolation) return;
 
+    const folderId = sessionStorage.getItem("scanFolderId");
+    if (!folderId) {
+      alert("Folder ID not found.");
+      return;
+    }
+
     setIsMovingFile(selectedViolation.file);
-    showNotification('success', `Please move "${selectedViolation.file}" out of this folder, then click Verify to confirm.`);
+    try {
+      const res = await fetch("/api/onedrive/open-folder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folderId })
+      });
+
+      if (res.ok) {
+        showNotification('success', `File explorer opened. Move "${selectedViolation.file}" out of this folder, then click Verify to confirm.`);
+      } else {
+        showNotification('warning', `Unable to open file explorer automatically. Please navigate to your synced OneDrive folder and move "${selectedViolation.file}" manually, then click Verify to confirm.`);
+      }
+    } catch (err) {
+      console.error("Error opening folder:", err);
+      showNotification('warning', `Unable to open file explorer. Please navigate to your synced OneDrive folder and move "${selectedViolation.file}" manually, then click Verify to confirm.`);
+    } finally {
+      setIsMovingFile(null);
+    }
   };
 
   const verifyMovedFile = async () => {
@@ -432,6 +535,7 @@ export default function ScanResultClient() {
           return v;
         }));
 
+        await markViolationAsSolved(selectedViolation.file);
         await loadScanData();
         showNotification('success', `"${selectedViolation.file}" has successfully moved out of the folder.`);
         setShowIssueModal(false);
@@ -464,6 +568,14 @@ export default function ScanResultClient() {
       alert("Please provide a valid file name.");
       return;
     }
+
+    // Check if the name actually changed (including case sensitivity)
+    const currentFile = realFiles.find(f => f.id === fileId);
+    if (currentFile && currentFile.name === newName.trim()) {
+      alert("The new name is the same as the current name. Please provide a different name.");
+      return;
+    }
+
     setIsRenaming(fileId);
     try {
       const res = await fetch("/api/onedrive/rename-file", {
@@ -479,18 +591,22 @@ export default function ScanResultClient() {
 
       showNotification("success", `Renamed file to ${newName.trim()} successfully.`);
 
+      const updatedName = newName.trim();
+      setSelectedItemToFix(updatedName);
+      setNewNameVal(updatedName);
+
       // Update violationsState immediately so UI reflects the new name without waiting
       setViolationsState(prev => prev.map(v => {
         const oldNameMatch = selectedViolation && v.file.trim().toLowerCase() === selectedViolation.file.trim().toLowerCase();
         const idMatch = v.id && v.id === fileId;
         if (oldNameMatch || idMatch) {
-          return { ...v, file: newName.trim(), isSolved: true, webUrl: data.file?.webUrl };
+          return { ...v, file: updatedName, isSolved: true, webUrl: data.file?.webUrl };
         }
         return v;
       }));
 
-      // Also inform backend/state updater
-      await markViolationAsSolved(selectedViolation?.file || newName.trim(), data.file?.webUrl);
+      // Also inform backend/state updater with the final renamed filename
+      await markViolationAsSolved(updatedName, data.file?.webUrl);
       await loadScanData();
     } catch (err: unknown) {
       const e = err as Error;
@@ -621,6 +737,7 @@ export default function ScanResultClient() {
       setShowRuleModal(false);
 
       // Only mark violations as solved if they were actually processed and fixed by a rule engine action
+      let finalViolations: Violation[] = violationsState;
       for (const log of (data.logs || [])) {
         const isFixAction = log.action && (
           log.action.startsWith("Renamed → ") ||
@@ -638,9 +755,9 @@ export default function ScanResultClient() {
           const fid = sessionStorage.getItem("scanFolderId");
           if (fid) {
             try {
-                      const filesRes = await fetch(`/api/onedrive/files?folderId=${fid}`);
-                      const filesData = await filesRes.json();
-                      const foundFile = (filesData.files || []).find((f: FileEntry) => f.name.toLowerCase() === searchName.toLowerCase());
+              const filesRes = await fetch(`/api/onedrive/files?folderId=${fid}`);
+              const filesData = await filesRes.json();
+              const foundFile = (filesData.files || []).find((f: FileEntry) => f.name.toLowerCase() === searchName.toLowerCase());
               if (foundFile) {
                 solvedWebUrl = foundFile.webUrl;
               }
@@ -649,18 +766,12 @@ export default function ScanResultClient() {
             }
           }
 
-          await markViolationAsSolved(log.file, solvedWebUrl);
+          const updated = await markViolationAsSolved(log.file, solvedWebUrl);
+          if (updated && updated.length) {
+            finalViolations = updated;
+          }
         }
       }
-
-      const updatedFiles = await fetch(
-        `/api/onedrive/files?folderId=${sessionStorage.getItem("scanFolderId")}`
-      ).then(res => res.json());
-
-      const newFiles = updatedFiles.files || [] as FileEntry[];
-      const newFileNames = (newFiles as FileEntry[]).map((f: FileEntry) =>
-        f.name.trim().toLowerCase()
-      );
 
       const newMissing = requiredFiles.filter(
         (rf: string) => !newFileNames.includes(rf.toLowerCase())
@@ -675,12 +786,82 @@ export default function ScanResultClient() {
               100
           );
 
-      sessionStorage.setItem(
-        "lastScan",
-        JSON.stringify({
-          compliance: newCompliance
-        })
-      );
+      const updatedLogs = (finalViolations || violationsState)
+        .filter((v) => !v.isSolved)
+        .map((v) => ({
+          file: v.file,
+          rule: v.type,
+          violation: true,
+          expected: v.expected,
+          webUrl: v.webUrl,
+          timestamp: new Date().toISOString()
+        }));
+
+      const saved = JSON.parse(sessionStorage.getItem("lastScan") || "{}");
+      let cloneId = sessionStorage.getItem("fixReportCloneId");
+      let targetId = cloneId || saved?.id;
+      const status = newCompliance >= 80 ? "Completed" : "Incomplete";
+      const updatedScanMeta = {
+        compliance: newCompliance,
+        status,
+        date: new Date().toLocaleString(),
+        logs: updatedLogs,
+        totalFiles: newFiles.length
+      };
+
+      // If the user started fixing from an existing report but no clone yet,
+      // create a cloned report now so the original remains unchanged.
+      if (hasSelectedFixNow && !cloneId && saved?.id) {
+        try {
+          const response = await fetch("/api/scans/clone", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: saved.id, compliance: newCompliance, overrides: updatedScanMeta })
+          });
+
+          const clone = await response.json();
+          if (response.ok && clone?.id) {
+            cloneId = clone.id;
+            sessionStorage.setItem("fixReportCloneId", clone.id);
+            sessionStorage.setItem("newClonedReport", JSON.stringify(clone));
+            targetId = clone.id;
+          } else {
+            console.error("Failed to clone scan record on finalize:", clone?.error || "Unknown error");
+          }
+        } catch (err) {
+          console.error("Failed to clone report record on finalize:", err);
+        }
+      }
+
+      const lastScanRecord = {
+        ...saved,
+        ...updatedScanMeta,
+        id: targetId || undefined
+      };
+
+      sessionStorage.setItem("lastScan", JSON.stringify(lastScanRecord));
+
+      if (cloneId) {
+        // keep new cloned report for report page to pick up
+        sessionStorage.setItem("newClonedReport", JSON.stringify(lastScanRecord));
+      }
+
+      // Persist updated data to DB for the correct target (clone or original)
+      if (targetId) {
+        if (hasSelectedFixNow && cloneId) {
+          await fetch("/api/scans/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: targetId, updates: updatedScanMeta })
+          }).catch(err => {
+            console.error("Failed to persist cloned scan updates:", err);
+          });
+        } else {
+          updateScanCompliance(targetId, newCompliance).catch(err => {
+            console.error("Failed to persist updated compliance after rules:", err);
+          });
+        }
+      }
 
       setFixed(newCompliance === 100);
     } catch (err: unknown) {
@@ -861,20 +1042,9 @@ export default function ScanResultClient() {
                           <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                             {/* Always show a Fix Files button for unresolved items so user doesn't need to select first */}
                             {v.isSolved ? (
-                              v.webUrl ? (
-                                <a
-                                  href={v.webUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-100/50 transition-all hover:scale-105 active:scale-95 inline-flex items-center gap-1.5"
-                                >
-                                  🔗 View in OneDrive
-                                </a>
-                              ) : (
-                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-100/50 px-3 py-1.5 rounded-lg">
-                                  Resolved
-                                </span>
-                              )
+                              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-100/50 px-3 py-1.5 rounded-lg">
+                                Done
+                              </span>
                             ) : (
                               // show button for any unresolved issue (no need to select first)
                               <button
@@ -1004,21 +1174,23 @@ export default function ScanResultClient() {
 
                 {selectedViolation.type === "Wrong Folder" && (
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">Move <strong>{selectedViolation.file}</strong> out of this folder to remove it from the scan.</p>
-                    <button
-                      onClick={handleModalMoveFile}
-                      disabled={isMovingFile === selectedViolation.file}
-                      className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-yellow-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-yellow-700 disabled:bg-gray-200 disabled:text-gray-400"
-                    >
-                      {isMovingFile === selectedViolation.file ? 'Opening...' : 'Move File'}
-                    </button>
-                    <button
-                      onClick={verifyMovedFile}
-                      disabled={isVerifyingMove}
-                      className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400"
-                    >
-                      {isVerifyingMove ? 'Verifying...' : 'Verify Moved'}
-                    </button>
+                    <p className="text-sm text-gray-600">Move <strong>{selectedViolation.file}</strong> out of this folder to resolve it.</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        onClick={handleModalMoveFile}
+                        disabled={isMovingFile === selectedViolation.file}
+                        className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-yellow-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-yellow-700 disabled:bg-gray-200 disabled:text-gray-400"
+                      >
+                        {isMovingFile === selectedViolation.file ? 'Opening...' : 'Move'}
+                      </button>
+                      <button
+                        onClick={verifyMovedFile}
+                        disabled={isVerifyingMove}
+                        className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400"
+                      >
+                        {isVerifyingMove ? 'Verifying...' : 'Verify Moved'}
+                      </button>
+                    </div>
                   </div>
                 )}
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { getDbData, saveDbData } from "@/lib/db";
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 
 // TEMPLATES
@@ -9,7 +10,7 @@ export async function addTemplate(formData: FormData) {
   if (!db) return false;
 
   const newTemplate = {
-    id: "t_" + Date.now().toString(),
+    id: "t_" + randomUUID(),
     name: formData.get("templateName") as string || "Untitled Template",
     requiredFolders: (formData.get("requiredFolders") as string || "Docs/,Images/").split(",").map(s => s.trim()).filter(Boolean),
     requiredFiles: (formData.get("requiredFiles") as string || "").split(",").map(s => s.trim()).filter(Boolean),
@@ -56,7 +57,7 @@ export async function addRule(formData: FormData) {
   if (!db) return false;
 
   const newRule = {
-    id: Date.now(),
+    id: randomUUID(),
 
     name: (formData.get("name") as string) || "New Rule",
 
@@ -79,7 +80,7 @@ export async function addRule(formData: FormData) {
   return true;
 }
 
-export async function updateRule(id: number, formData: FormData) {
+export async function updateRule(id: string, formData: FormData) {
   const db = await getDbData();
   if (!db) return false;
 
@@ -110,7 +111,7 @@ export async function updateRule(id: number, formData: FormData) {
   return true;
 }
 
-export async function deleteRule(id: number) {
+export async function deleteRule(id: string) {
   const db = await getDbData();
   if (!db) return false;
 
@@ -169,4 +170,49 @@ export async function updateScanCompliance(id: string, compliance: number) {
   }
   return false;
 }
+
+export async function updateScanRecord(id: string, updates: Partial<any>) {
+  const db = await getDbData();
+  if (!db || !db.stats?.recentScans) return null;
+
+  const index = db.stats.recentScans.findIndex((s: any) => s.id === id);
+  if (index === -1) return null;
+
+  db.stats.recentScans[index] = {
+    ...db.stats.recentScans[index],
+    ...updates
+  };
+
+  await saveDbData(db);
+  revalidatePath("/report");
+  revalidatePath("/dashboard");
+  return db.stats.recentScans[index];
+}
+
+export async function cloneScanRecord(id: string, compliance: number, overrides: Partial<any> = {}) {
+  const db = await getDbData();
+  if (!db || !db.stats?.recentScans) return null;
+
+  const existing = db.stats.recentScans.find((s: any) => s.id === id);
+  if (!existing) return null;
+
+  const newScan = {
+    ...existing,
+    ...overrides,
+    id: randomUUID(),
+    parentReportId: id,
+    auditId: `AUD-${randomUUID()}`,
+    date: new Date().toLocaleString(),
+    compliance,
+    status: compliance >= 80 ? "Completed" : "Incomplete"
+  };
+
+  db.stats.recentScans.push(newScan);
+  db.stats.totalFoldersScanned = db.stats.recentScans.length;
+  await saveDbData(db);
+  revalidatePath("/report");
+  revalidatePath("/dashboard");
+  return newScan;
+}
+
 

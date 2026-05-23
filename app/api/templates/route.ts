@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDbData, saveDbData } from "@/lib/db";
+import { randomUUID } from "crypto";
 
 export async function GET() {
   const db = await getDbData();
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
   const body = await req.json();
 
   const newTemplate = {
-    id: "t_" + Date.now(),
+    id: "t_" + randomUUID(),
     name: body.name,
     requiredFolders: body.requiredFolders || [],
     requiredFiles: body.requiredFiles || [],

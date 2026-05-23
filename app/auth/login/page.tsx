@@ -1,13 +1,17 @@
 "use client";
 
-//importing Next.js built-in Image component for optimized images
+import React, { useState } from "react";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
-import { LayoutGrid } from "lucide-react";
 
-//main function
-//NOTES: React components should be PascalCase
 export default function Login() {
+    const [isSigningIn, setIsSigningIn] = useState(false);
+
+    const handleSignIn = () => {
+      setIsSigningIn(true);
+      signIn("microsoft-entra-id", { callbackUrl: "/system/dashboard", prompt: "select_account consent" });
+    };
+
     return (
         <div className="flex h-screen items-center justify-center bg-gray-100"> 
         {/*Tailwind CSS classes to style the container*/}
@@ -31,15 +35,16 @@ export default function Login() {
 
                 {/*button*/}
                 <button 
-                    onClick={() => signIn("microsoft-entra-id", {callbackUrl: "/system/dashboard", prompt: "select_account consent"})}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-3 mx-auto transition">
+                    onClick={handleSignIn}
+                    disabled={isSigningIn}
+                    className="bg-indigo-700 hover:bg-indigo-800 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-3 mx-auto transition cursor-pointer font-semibold">
                     <Image
                         src="/microsoft-logo.svg"
                         alt="Microsoft Logo"
                         width={20}
                         height={20}
                     />
-                        Sign in with Microsoft
+                        {isSigningIn ? 'Signing in...' : 'Sign in with Microsoft'}
                 </button>
             </div>
         </div>

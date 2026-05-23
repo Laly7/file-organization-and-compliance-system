@@ -26,7 +26,7 @@ export default async function ReportDetailsPage({
     <div className="max-w-6xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
           <Link href="/system/report" className="text-blue-600 hover:underline">← Back to Reports</Link>
-          <h1 className="text-2xl font-bold text-black border-l pl-4 border-gray-300">Report Detail: {report.id}</h1>
+          <h1 className="text-2xl font-bold text-black border-l pl-4 border-gray-300">Report Detail: {String(report.id).slice(0,15)}{String(report.id).length > 15 ? '...' : ''}</h1>
         </div>
 
         <div className="grid grid-cols-2 gap-8">
@@ -74,14 +74,16 @@ export default async function ReportDetailsPage({
           </div>
 
           <div className="bg-white rounded-xl shadow-md border p-8 space-y-4">
-             <h2 className="text-xl font-bold border-b pb-2 text-black">Detailed Findings</h2>
-             <ul className="space-y-3">
-               <li className="p-3 bg-green-50 text-green-800 rounded-lg border border-green-200 text-sm font-medium">✓ Required File `Report.docx` successfully verified.</li>
-               <li className="p-3 bg-green-50 text-green-800 rounded-lg border border-green-200 text-sm font-medium">✓ Pattern matches global rule `YYYY_ProjectName`.</li>
-               {report.status !== "Completed" && (
-                 <li className="p-3 bg-red-50 text-red-800 rounded-lg border border-red-200 text-sm font-medium">✗ Warning: Missing optional compliance parameters.</li>
-               )}
-             </ul>
+             <h2 className="text-xl font-bold border-b pb-2 text-black">Status</h2>
+             {report.compliance === 100 ? (
+               <div className="p-3 bg-green-50 text-green-800 rounded-lg border border-green-200 text-sm font-medium">
+                 ✓ Folder is complete
+               </div>
+             ) : (
+               <div className="p-3 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 text-sm font-medium">
+                 ⚠ Folder has {100 - (report.compliance ?? 0)}% compliance issues
+               </div>
+             )}
           </div>
         </div>
     </div>

@@ -154,48 +154,8 @@
     }
   ],
   "stats": {
-    "totalFoldersScanned": 2,
+    "totalFoldersScanned": 0,
     "lastScanDate": "None",
-    "recentScans": [
-      {
-        "id": "1779461027095",
-        "auditId": "AUD-1779461027095",
-        "folder": "Project_2026_Test",
-        "folderId": "9F760367FCA2AC15!sa738122fb888454ebe9ee7c67a73dcdc",
-        "template": "Project Template",
-        "templateId": "t_1778124179454",
-        "date": "22/05/2026, 10:43:47 pm",
-        "status": "Incomplete",
-        "compliance": 33,
-        "totalFiles": 5,
-        "logs": [
-          {
-            "file": "Report.pdf",
-            "rule": "Template Missing File",
-            "violation": true,
-            "timestamp": "2026-05-22T14:43:47.093Z"
-          },
-          {
-            "file": "Presentation.pptx",
-            "rule": "Template Missing File",
-            "violation": true,
-            "timestamp": "2026-05-22T14:43:47.093Z"
-          }
-        ]
-      },
-      {
-        "id": "1779461067540",
-        "auditId": "AUD-1779461067540",
-        "folder": "Project_2026",
-        "folderId": "9F760367FCA2AC15!s9f9436bc0e284a4f908fa4971ec8f6f0",
-        "template": "Project Template",
-        "templateId": "t_1778124179454",
-        "date": "22/05/2026, 10:44:27 pm",
-        "status": "Completed",
-        "compliance": 100,
-        "totalFiles": 4,
-        "logs": []
-      }
-    ]
+    "recentScans": []
   }
 }

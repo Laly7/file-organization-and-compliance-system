@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDbData, saveDbData } from "@/lib/db";
+import { randomUUID } from "crypto";
 import { processFiles } from "@/lib/ruleEngine";
 import { getDriveChildren, getDriveFilesRecursively } from "@/lib/onedrive";
 import { auth } from "@/auth";
@@ -97,9 +98,9 @@ export async function POST(req: Request) {
     : 100;
 
     const scan = {
-      id: Date.now().toString(),
+      id: randomUUID(),
 
-      auditId: "AUD-" + Date.now(),
+      auditId: `AUD-${randomUUID()}`,
 
       folder: folderName || "Unknown Folder",
 
