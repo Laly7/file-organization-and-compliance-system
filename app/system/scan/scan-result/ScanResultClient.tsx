@@ -1210,7 +1210,7 @@ export default function ScanResultClient() {
                       value={newNameVal}
                       placeholder={templateData?.namingRule || "Enter new file name"}
                       onChange={(e) => setNewNameVal(e.target.value)}
-                      className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100"
+                      className="w-full px-4 py-3 text-sm border border-gray-200 text-black rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100"
                     />
                     <button
                       onClick={async () => {
