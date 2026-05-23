@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { getTemplateByName, updateScanCompliance } from "@/app/actions";
+import { getTemplateByName } from "@/app/actions";
 
 export default function ScanResultClient() {
   const router = useRouter();
@@ -196,32 +196,34 @@ export default function ScanResultClient() {
       newScore = total > 0 ? Math.min(100, Math.round(initialCompliance + (100 - initialCompliance) * (solved / total))) : 100;
     }
 
-    if (isFixingFromReport && originalScanId) {
-      if (!existingCloneId) {
-        try {
-          const response = await fetch("/api/scans/clone", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: originalScanId, compliance: newScore })
-          });
+    // ALWAYS create a clone on first fix (whether from report or fresh scan)
+    // This preserves the original scan record and creates a new entry for the fix attempt
+    if (originalScanId && !existingCloneId) {
+      try {
+        const response = await fetch("/api/scans/clone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: originalScanId, compliance: newScore })
+        });
 
-          const clone = await response.json();
-          if (response.ok && clone?.id) {
-            targetId = clone.id;
-            updatedScan = { ...clone, compliance: newScore };
-            sessionStorage.setItem("fixReportCloneId", clone.id);
+        const clone = await response.json();
+        if (response.ok && clone?.id) {
+          targetId = clone.id;
+          updatedScan = { ...clone, compliance: newScore };
+          sessionStorage.setItem("fixReportCloneId", clone.id);
+          if (isFixingFromReport) {
             sessionStorage.setItem("newClonedReport", JSON.stringify(updatedScan));
-          } else {
-            console.error("Failed to clone scan record:", clone?.error || "Unknown error");
-            targetId = undefined;
           }
-        } catch (err) {
-          console.error("Failed to clone report record:", err);
+        } else {
+          console.error("Failed to clone scan record:", clone?.error || "Unknown error");
           targetId = undefined;
         }
-      } else {
-        targetId = existingCloneId;
+      } catch (err) {
+        console.error("Failed to clone scan record:", err);
+        targetId = undefined;
       }
+    } else if (existingCloneId) {
+      targetId = existingCloneId;
     }
 
     if (!updatedScan.id && saved?.id) {
@@ -240,9 +242,16 @@ export default function ScanResultClient() {
       sessionStorage.setItem("newClonedReport", JSON.stringify(updatedScan));
     }
 
-    if (targetId) {
-      updateScanCompliance(targetId, newScore).catch(err => {
-        console.error("Failed to update scan compliance in DB:", err);
+    // Update the cloned record with the new compliance score
+    // No longer using updateScanCompliance which updated in place
+    if (targetId && existingCloneId) {
+      // If we already have a clone, update it via the update endpoint
+      await fetch("/api/scans/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: targetId, updates: { compliance: newScore } })
+      }).catch(err => {
+        console.error("Failed to update cloned scan compliance in DB:", err);
       });
     }
 
@@ -848,17 +857,36 @@ export default function ScanResultClient() {
 
       // Persist updated data to DB for the correct target (clone or original)
       if (targetId) {
-        if (hasSelectedFixNow && cloneId) {
+        // Always ensure we have a clone before persisting any changes
+        // This preserves the original scan and creates a new entry for fixes
+        if (!cloneId && saved?.id) {
+          try {
+            const response = await fetch("/api/scans/clone", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: saved.id, compliance: newCompliance, overrides: updatedScanMeta })
+            });
+
+            const clone = await response.json();
+            if (response.ok && clone?.id) {
+              cloneId = clone.id;
+              sessionStorage.setItem("fixReportCloneId", clone.id);
+              sessionStorage.setItem("newClonedReport", JSON.stringify(clone));
+              targetId = clone.id;
+            }
+          } catch (err) {
+            console.error("Failed to clone scan record:", err);
+          }
+        }
+
+        // Update the cloned/new record with compliance changes
+        if (cloneId) {
           await fetch("/api/scans/update", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: targetId, updates: updatedScanMeta })
           }).catch(err => {
-            console.error("Failed to persist cloned scan updates:", err);
-          });
-        } else {
-          updateScanCompliance(targetId, newCompliance).catch(err => {
-            console.error("Failed to persist updated compliance after rules:", err);
+            console.error("Failed to persist scan updates:", err);
           });
         }
       }
