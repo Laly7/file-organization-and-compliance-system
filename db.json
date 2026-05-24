@@ -154,7 +154,7 @@
     }
   ],
   "stats": {
-    "totalFoldersScanned": 5,
+    "totalFoldersScanned": 14,
     "lastScanDate": "None",
     "recentScans": [
       {
@@ -263,6 +263,195 @@
           }
         ],
         "parentReportId": "485d9b02-5234-407f-822f-2bb12b35e30a"
+      },
+      {
+        "id": "1afb81bf-f29a-44a1-9a51-e14e8d6c32b4",
+        "auditId": "AUD-f4946c8a-9abc-4547-b52d-34c626ab3e92",
+        "folder": "Software Project",
+        "folderId": "3ECFC96F66925EFA!s3303a3f8af964adf8cd23660d9f5b3b1",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/24/2026, 10:12:33 AM",
+        "status": "Incomplete",
+        "compliance": 33,
+        "totalFiles": 32,
+        "logs": [
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-24T02:12:33.801Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-24T02:12:33.801Z"
+          }
+        ]
+      },
+      {
+        "id": "9e1f8625-e859-42d9-9541-fcc75a381791",
+        "auditId": "AUD-35470ce2-4dcd-4edd-a734-1298d098361a",
+        "folder": "Software Project",
+        "folderId": "3ECFC96F66925EFA!s3303a3f8af964adf8cd23660d9f5b3b1",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/24/2026, 10:13:19 AM",
+        "status": "Incomplete",
+        "compliance": 67,
+        "totalFiles": 32,
+        "logs": [
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-24T02:12:33.801Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-24T02:12:33.801Z"
+          }
+        ],
+        "parentReportId": "1afb81bf-f29a-44a1-9a51-e14e8d6c32b4"
+      },
+      {
+        "id": "4b08d7a3-381d-4e7f-82ec-e2a3e7341d34",
+        "auditId": "AUD-8775b346-d8e6-427c-9d4e-329b25d8af82",
+        "folder": "Project_2026_Test",
+        "folderId": "3ECFC96F66925EFA!se38196a107bb4d13a4385f6f6116b1c2",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/24/2026, 10:17:42 AM",
+        "status": "Incomplete",
+        "compliance": 67,
+        "totalFiles": 5,
+        "logs": [
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-24T02:17:42.530Z"
+          }
+        ]
+      },
+      {
+        "id": "fb42086a-2712-47a8-a496-541d06a17e47",
+        "auditId": "AUD-0a26915c-9580-488a-a0f1-26c329661de5",
+        "folder": "Project_2026_Test",
+        "folderId": "3ECFC96F66925EFA!se38196a107bb4d13a4385f6f6116b1c2",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/24/2026, 10:18:23 AM",
+        "status": "Completed",
+        "compliance": 100,
+        "totalFiles": 5,
+        "logs": [
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-24T02:17:42.530Z"
+          }
+        ],
+        "parentReportId": "4b08d7a3-381d-4e7f-82ec-e2a3e7341d34"
+      },
+      {
+        "id": "1acb9d24-e199-4a66-ab4d-bfbf229f2936",
+        "auditId": "AUD-9a2f63aa-a82d-4918-8b4b-9166608200c1",
+        "folder": "Project_2026_Test",
+        "folderId": "3ECFC96F66925EFA!se38196a107bb4d13a4385f6f6116b1c2",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/24/2026, 10:26:12 AM",
+        "status": "Completed",
+        "compliance": 100,
+        "totalFiles": 6,
+        "logs": []
+      },
+      {
+        "id": "4a5d0532-84c6-4382-a1bb-7bab5f730cef",
+        "auditId": "AUD-778b2c42-35c5-44c4-b1cb-1f88c445bef6",
+        "folder": "Project_2026_Test",
+        "folderId": "3ECFC96F66925EFA!se38196a107bb4d13a4385f6f6116b1c2",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/24/2026, 10:26:57 AM",
+        "status": "Incomplete",
+        "compliance": 67,
+        "totalFiles": 5,
+        "logs": [
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-24T02:26:57.418Z"
+          }
+        ]
+      },
+      {
+        "id": "1cf58623-b09b-44e0-b986-2c73602caf35",
+        "auditId": "AUD-25aa6bf4-ed74-46f1-91df-cf19a3a0c615",
+        "folder": "Project_2026_Test",
+        "folderId": "3ECFC96F66925EFA!se38196a107bb4d13a4385f6f6116b1c2",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/24/2026, 10:27:22 AM",
+        "status": "Completed",
+        "compliance": 100,
+        "totalFiles": 5,
+        "logs": [
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-24T02:26:57.418Z"
+          }
+        ],
+        "parentReportId": "4a5d0532-84c6-4382-a1bb-7bab5f730cef"
+      },
+      {
+        "id": "93e5dc40-dd8c-41e1-a709-fe2596d8967a",
+        "auditId": "AUD-3d3c7c1a-2987-466b-8246-44109bd394d7",
+        "folder": "Project_2026_Test",
+        "folderId": "3ECFC96F66925EFA!se38196a107bb4d13a4385f6f6116b1c2",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/24/2026, 10:39:48 AM",
+        "status": "Incomplete",
+        "compliance": 67,
+        "totalFiles": 5,
+        "logs": [
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-24T02:39:48.465Z"
+          }
+        ]
+      },
+      {
+        "id": "ee9558a5-684d-467d-88fe-3179ca8db05b",
+        "auditId": "AUD-922a4fa3-eedc-4d58-8e16-e4e1aab9bd8e",
+        "folder": "Project_2026_Test",
+        "folderId": "3ECFC96F66925EFA!se38196a107bb4d13a4385f6f6116b1c2",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "date": "5/24/2026, 10:40:14 AM",
+        "status": "Completed",
+        "compliance": 100,
+        "totalFiles": 5,
+        "logs": [
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "violation": true,
+            "timestamp": "2026-05-24T02:39:48.465Z"
+          }
+        ],
+        "parentReportId": "93e5dc40-dd8c-41e1-a709-fe2596d8967a"
       }
     ]
   }

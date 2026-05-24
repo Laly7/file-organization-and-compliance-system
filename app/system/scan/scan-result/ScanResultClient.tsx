@@ -20,7 +20,7 @@ export default function ScanResultClient() {
   type FileEntry = { id: string; name: string; isFolder: boolean; webUrl?: string };
   type Rule = { id: string; name: string; type: string; condition?: Record<string, unknown> };
   type FixLog = { file: string; rule?: string; action?: string };
-  type Violation = { type: string; file: string; expected?: string; isSolved?: boolean; webUrl?: string | null; id?: string };
+  type Violation = { type: string; file: string; expected?: string; isSolved?: boolean; webUrl?: string | null; id?: string; previouslyFixed?: boolean };
 
   const [rules, setRules] = useState<Rule[]>([]);
   const [fixLogs, setFixLogs] = useState<FixLog[]>([]);
@@ -29,6 +29,7 @@ export default function ScanResultClient() {
   const [scanFolder, setScanFolder] = useState<string | null>("");
   const [scanTemplate, setScanTemplate] = useState<string | null>("");
   type TemplateData = { requiredFiles?: string[]; requiredFolders?: string[]; optionalFiles?: string[]; namingRule?: string };
+  type ScanLog = { file: string; rule?: string; expected?: string; webUrl?: string };
   const [templateData, setTemplateData] = useState<TemplateData | null>(null);
   const [realFiles, setRealFiles] = useState<FileEntry[]>([]);
 
@@ -43,9 +44,73 @@ export default function ScanResultClient() {
 
   // Local state for dynamic compliance tracking & OneDrive links
   const [violationsState, setViolationsState] = useState<Violation[]>([]);
+  const [previousFixedIssues, setPreviousFixedIssues] = useState<string[]>([]);
+  const [parentScan, setParentScan] = useState<any | null>(null);
+  const [parentViolations, setParentViolations] = useState<Violation[]>([]);
   const [initialCompliance, setInitialCompliance] = useState<number>(0);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [fileOneDriveUrls, setFileOneDriveUrls] = useState<Record<string, string>>({});
+
+  const computeCurrentViolations = (template: TemplateData | null, files: FileEntry[]) => {
+    const requiredFiles = template?.requiredFiles || [];
+    const requiredFolders = template?.requiredFolders || [];
+    const optionalFiles = template?.optionalFiles || [];
+    const fileEntries = files.filter((f: FileEntry) => !f.isFolder);
+    const usedFileIds = new Set<string>();
+
+    const missingFiles: string[] = [];
+    const missingFolders: string[] = requiredFolders.filter((rf: string) => {
+      const rfNorm = rf.trim().toLowerCase().replace(/\/$/, "");
+      return !files.some(f => f.isFolder && f.name.trim().toLowerCase().replace(/\/$/, "") === rfNorm);
+    });
+
+    const wrongFilenameFiles: Array<{ entry: FileEntry; expected: string }> = [];
+    const otherUnknownFiles: FileEntry[] = [];
+
+    requiredFiles.forEach((rf: string) => {
+      const rfTrim = rf.trim();
+      const exactCaseSensitive = fileEntries.find((f: FileEntry) => f.name.trim() === rfTrim);
+      if (exactCaseSensitive) {
+        usedFileIds.add(exactCaseSensitive.id);
+        return;
+      }
+
+      const exactCaseInsensitive = fileEntries.find((f: FileEntry) => !usedFileIds.has(f.id) && f.name.trim().toLowerCase() === rfTrim.toLowerCase());
+      if (exactCaseInsensitive) {
+        usedFileIds.add(exactCaseInsensitive.id);
+        wrongFilenameFiles.push({ entry: exactCaseInsensitive, expected: rfTrim });
+        return;
+      }
+
+      const rfTokens = normalizeTokens(rfTrim);
+      const candidate = fileEntries.find((f: FileEntry) => {
+        if (usedFileIds.has(f.id)) return false;
+        const tokens = normalizeTokens(f.name);
+        const common = tokens.filter(t => rfTokens.includes(t));
+        return common.length > 0;
+      });
+
+      if (candidate) {
+        usedFileIds.add(candidate.id);
+        wrongFilenameFiles.push({ entry: candidate, expected: rfTrim });
+      } else {
+        missingFiles.push(rfTrim);
+      }
+    });
+
+    fileEntries.forEach((f: FileEntry) => {
+      if (!usedFileIds.has(f.id) && !requiredFiles.some((rf: string) => rf.trim().toLowerCase() === f.name.trim().toLowerCase()) && !optionalFiles.some((of: string) => of.trim().toLowerCase() === f.name.trim().toLowerCase())) {
+        otherUnknownFiles.push(f);
+      }
+    });
+
+    return [
+      ...missingFiles.map((f: string) => ({ type: "Missing File", file: f, isSolved: false, webUrl: null })),
+      ...missingFolders.map((f: string) => ({ type: "Missing Folder", file: f, isSolved: false, webUrl: null })),
+      ...wrongFilenameFiles.map(w => ({ type: "Wrong Filename", file: w.entry.name, expected: w.expected, isSolved: false, webUrl: null, id: w.entry.id })),
+      ...otherUnknownFiles.map((f: FileEntry) => ({ type: "Wrong Folder", file: f.name, isSolved: false, webUrl: null, id: f.id }))
+    ];
+  };
   const [dataLoadedFromApi, setDataLoadedFromApi] = useState(false);
   const requiredFiles = templateData?.requiredFiles || [];
   const requiredFolders = templateData?.requiredFolders || [];
@@ -125,6 +190,39 @@ export default function ScanResultClient() {
   const displayedViolations = violationsState.length > 0
     ? violationsState.filter(v => !(v.type === "Wrong Folder" && v.isSolved))
     : violations.map(v => ({ ...v, isSolved: false, webUrl: null }));
+
+  // Compose compliance list: include parent scan items (if any) so previously-fixed items still appear
+  const complianceItems: Violation[] = (() => {
+    const items: Violation[] = [];
+    const added = new Set<string>();
+
+    // If we have a parent scan, show its recorded violations first (mark previously fixed)
+    if (parentViolations && parentViolations.length > 0) {
+      parentViolations.forEach(pv => {
+        const isPrevFixed = previousFixedIssues.includes(pv.file);
+        const currentMatch = displayedViolations.find(dv => dv.file === pv.file);
+        if (currentMatch) {
+          // use current match (preserves isSolved state)
+          items.push(currentMatch);
+          added.add(currentMatch.file);
+        } else {
+          // not present now -> show as solved/previously fixed
+          items.push({ ...pv, isSolved: true, previouslyFixed: isPrevFixed });
+          added.add(pv.file);
+        }
+      });
+    }
+
+    // Add any remaining current violations that weren't in parent
+    displayedViolations.forEach(dv => {
+      if (!added.has(dv.file)) {
+        items.push(dv);
+        added.add(dv.file);
+      }
+    });
+
+    return items;
+  })();
 
   const selectedViolation = displayedViolations.find(v => v.file === selectedItemToFix) || null;
 
@@ -206,7 +304,7 @@ export default function ScanResultClient() {
           body: JSON.stringify({ id: originalScanId, compliance: newScore })
         });
 
-        const clone = await response.json();
+        const clone = await response.json() as { id?: string; [key: string]: unknown };
         if (response.ok && clone?.id) {
           targetId = clone.id;
           updatedScan = { ...clone, compliance: newScore };
@@ -281,13 +379,15 @@ export default function ScanResultClient() {
       if (loadedTemplate) setTemplateData(loadedTemplate);
     }
 
+    let currentFilesData: FileEntry[] = [];
     if (fid) {
       try {
         const res = await fetch(`/api/onedrive/files?folderId=${fid}`);
         const data = await res.json();
 
         if (res.ok) {
-          setRealFiles(data.files || []);
+          currentFilesData = data.files || [];
+          setRealFiles(currentFilesData);
         }
       } catch (err) {
         console.error("Failed to load real files", err);
@@ -296,6 +396,42 @@ export default function ScanResultClient() {
 
     // Mark data loading as complete
     setDataLoadedFromApi(true);
+
+    // If this scan was opened from a report record, preserve that report's issues
+    // and mark any of those issues that are already resolved in the current folder as previously fixed.
+    try {
+      const saved = JSON.parse(sessionStorage.getItem("lastScan") || "{}") as { parentReportId?: string; logs?: ScanLog[] };
+      const newCloned = JSON.parse(sessionStorage.getItem("newClonedReport") || "null") as { parentReportId?: string; logs?: ScanLog[] } | null;
+      const isReportFix = sessionStorage.getItem("isFixingFromReport") === "true";
+      const reportLogs = (saved.logs && saved.logs.length > 0) ? saved.logs : (newCloned?.logs || []);
+      const currentViolations = computeCurrentViolations(loadedTemplate, currentFilesData);
+      const currentFiles = currentViolations.map(v => v.file);
+
+      if (isReportFix && reportLogs.length > 0) {
+        setParentScan(saved || null);
+        const reportViolations = reportLogs.map((l: ScanLog) => ({ type: l.rule || 'Violation', file: l.file, expected: l.expected, isSolved: false, webUrl: l.webUrl } as Violation));
+        setParentViolations(reportViolations);
+        const reportFiles = reportViolations.map(v => v.file).filter(Boolean);
+        const prevFixed = reportFiles.filter((file: string) => !currentFiles.includes(file));
+        setPreviousFixedIssues(prevFixed);
+      } else {
+        const parentId = saved?.parentReportId || newCloned?.parentReportId;
+        if (parentId) {
+          const pres = await fetch(`/api/scans/${parentId}`);
+          if (pres.ok) {
+            const parent = await pres.json();
+            setParentScan(parent || null);
+            const pViolations = (parent.logs || []).map((l: ScanLog) => ({ type: l.rule || 'Violation', file: l.file, expected: l.expected, isSolved: false, webUrl: l.webUrl } as Violation));
+            setParentViolations(pViolations);
+            const parentFiles = (parent.logs || []).map((l: ScanLog) => l.file).filter(Boolean);
+            const prevFixed = parentFiles.filter((f: string) => !currentFiles.includes(f));
+            setPreviousFixedIssues(prevFixed);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load parent scan:", err);
+    }
   };
 
   useEffect(() => {
@@ -736,6 +872,13 @@ export default function ScanResultClient() {
         );
       }
 
+      if (data.newScan) {
+        sessionStorage.setItem("lastScan", JSON.stringify(data.newScan));
+        if (data.newScan.parentReportId) {
+          sessionStorage.setItem("newClonedReport", JSON.stringify(data.newScan));
+        }
+      }
+
       setFixLogs(data.logs || []);
       await loadScanData();
 
@@ -806,7 +949,7 @@ export default function ScanResultClient() {
           timestamp: new Date().toISOString()
         }));
 
-      const saved = JSON.parse(sessionStorage.getItem("lastScan") || "{}");
+      const saved = JSON.parse(sessionStorage.getItem("lastScan") || "{}") as { id?: string };
       let cloneId = sessionStorage.getItem("fixReportCloneId");
       let targetId = cloneId || saved?.id;
       const status = newCompliance >= 80 ? "Completed" : "Incomplete";
@@ -817,6 +960,7 @@ export default function ScanResultClient() {
         logs: updatedLogs,
         totalFiles: newFiles.length
       };
+      let createdClone: Record<string, unknown> | null = null;
 
       // If the user started fixing from an existing report but no clone yet,
       // create a cloned report now so the original remains unchanged.
@@ -828,9 +972,10 @@ export default function ScanResultClient() {
             body: JSON.stringify({ id: saved.id, compliance: newCompliance, overrides: updatedScanMeta })
           });
 
-          const clone = await response.json();
+          const clone = await response.json() as { id?: string; error?: string; [key: string]: unknown };
           if (response.ok && clone?.id) {
             cloneId = clone.id;
+            createdClone = clone;
             sessionStorage.setItem("fixReportCloneId", clone.id);
             sessionStorage.setItem("newClonedReport", JSON.stringify(clone));
             targetId = clone.id;
@@ -842,11 +987,9 @@ export default function ScanResultClient() {
         }
       }
 
-      const lastScanRecord = {
-        ...saved,
-        ...updatedScanMeta,
-        id: targetId || undefined
-      };
+      const lastScanRecord = createdClone
+        ? { ...createdClone, ...updatedScanMeta, id: targetId || createdClone.id }
+        : { ...saved, ...updatedScanMeta, id: targetId || undefined };
 
       sessionStorage.setItem("lastScan", JSON.stringify(lastScanRecord));
 
@@ -867,7 +1010,7 @@ export default function ScanResultClient() {
               body: JSON.stringify({ id: saved.id, compliance: newCompliance, overrides: updatedScanMeta })
             });
 
-            const clone = await response.json();
+            const clone = await response.json() as { id?: string; [key: string]: unknown };
             if (response.ok && clone?.id) {
               cloneId = clone.id;
               sessionStorage.setItem("fixReportCloneId", clone.id);
@@ -971,6 +1114,37 @@ export default function ScanResultClient() {
               </div>
             )}
 
+            {/* Previous scan required compliance (show what was fixed later) */}
+            {parentScan && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pl-2">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest">Previous Scan — Required Compliance</h4>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50/30 rounded-2xl p-4 space-y-2 border border-gray-100">
+                  {parentViolations.length === 0 ? (
+                    <div className="text-sm text-gray-500">No recorded issues in previous scan.</div>
+                  ) : (
+                    parentViolations.map((pv, pidx) => (
+                      <div key={pidx} className="flex items-center justify-between p-2 rounded-lg bg-white/60 border border-gray-50 text-sm">
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-gray-800">{pv.file}</span>
+                          <span className="text-xs text-gray-500">{pv.type}</span>
+                        </div>
+                        {previousFixedIssues.includes(pv.file) ? (
+                          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-1 rounded-md">Previously Fixed</span>
+                        ) : (
+                          <span className="text-[10px] font-black uppercase tracking-wider text-gray-500 bg-gray-100 px-2 py-1 rounded-md">Active</span>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               <div className="flex items-center justify-between pl-2">
                 <div className="flex items-center gap-2">
@@ -985,7 +1159,11 @@ export default function ScanResultClient() {
                     </svg>
                   </button>
                 </div>
-                
+                {previousFixedIssues && previousFixedIssues.length > 0 && (
+                  <div className="text-xs text-gray-500 italic">
+                    Previous fixed issues: {previousFixedIssues.join(", ")}
+                  </div>
+                )}
               </div>
 
               <div className="bg-gray-50/50 rounded-3xl p-6 space-y-4 max-h-[480px] overflow-y-auto border border-gray-100 shadow-inner">
@@ -997,7 +1175,7 @@ export default function ScanResultClient() {
                       <span className="text-xs text-gray-400 font-medium">All systems fully compliant!</span>
                     </div>
                   ) : (
-                    displayedViolations.map((v, index) => {
+                    complianceItems.map((v, index) => {
                       const isSelected = selectedItemToFix === v.file;
                       const folderRule = rules.find(r => r.type === "folder" && r.condition && Object.prototype.hasOwnProperty.call(r.condition, 'folder'));
                       const targetFolder = folderRule ? (folderRule.condition as unknown as { folder?: string }).folder : (templateData?.requiredFolders?.[0] || "Docs");
@@ -1044,10 +1222,10 @@ export default function ScanResultClient() {
                                 {v.type === "Missing Folder" || v.type === "Wrong Folder" ? "📁" : "📄"} 
                                 {v.file}
                                 {v.isSolved && (
-                                  <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
-                                    Solved
-                                  </span>
-                                )}
+                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${v.previouslyFixed ? 'bg-sky-100 text-sky-700' : 'bg-emerald-100 text-emerald-800'}`}>
+                                  {v.previouslyFixed ? 'Previously Fixed' : 'Solved'}
+                                </span>
+                              )}
                               </span>
                               <span className={`text-[10px] uppercase tracking-wider mt-1 ${v.isSolved ? 'text-emerald-600/80 font-bold' : 'text-gray-500'}`}>
                                 {v.type === "Missing File" || v.type === "Missing Folder" 
