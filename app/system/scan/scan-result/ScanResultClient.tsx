@@ -44,9 +44,7 @@ export default function ScanResultClient() {
 
   // Local state for dynamic compliance tracking & OneDrive links
   const [violationsState, setViolationsState] = useState<Violation[]>([]);
-  const [previousFixedIssues, setPreviousFixedIssues] = useState<string[]>([]);
-  const [parentScan, setParentScan] = useState<any | null>(null);
-  const [parentViolations, setParentViolations] = useState<Violation[]>([]);
+  const [isFixingFromReport, setIsFixingFromReport] = useState(false);
   const [initialCompliance, setInitialCompliance] = useState<number>(0);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [fileOneDriveUrls, setFileOneDriveUrls] = useState<Record<string, string>>({});
@@ -191,38 +189,7 @@ export default function ScanResultClient() {
     ? violationsState.filter(v => !(v.type === "Wrong Folder" && v.isSolved))
     : violations.map(v => ({ ...v, isSolved: false, webUrl: null }));
 
-  // Compose compliance list: include parent scan items (if any) so previously-fixed items still appear
-  const complianceItems: Violation[] = (() => {
-    const items: Violation[] = [];
-    const added = new Set<string>();
-
-    // If we have a parent scan, show its recorded violations first (mark previously fixed)
-    if (parentViolations && parentViolations.length > 0) {
-      parentViolations.forEach(pv => {
-        const isPrevFixed = previousFixedIssues.includes(pv.file);
-        const currentMatch = displayedViolations.find(dv => dv.file === pv.file);
-        if (currentMatch) {
-          // use current match (preserves isSolved state)
-          items.push(currentMatch);
-          added.add(currentMatch.file);
-        } else {
-          // not present now -> show as solved/previously fixed
-          items.push({ ...pv, isSolved: true, previouslyFixed: isPrevFixed });
-          added.add(pv.file);
-        }
-      });
-    }
-
-    // Add any remaining current violations that weren't in parent
-    displayedViolations.forEach(dv => {
-      if (!added.has(dv.file)) {
-        items.push(dv);
-        added.add(dv.file);
-      }
-    });
-
-    return items;
-  })();
+  const complianceItems: Violation[] = displayedViolations;
 
   const selectedViolation = displayedViolations.find(v => v.file === selectedItemToFix) || null;
 
@@ -241,13 +208,14 @@ export default function ScanResultClient() {
   const totalInitialViolations = violationsState.length;
   const solvedCount = violationsState.filter(v => v.isSolved).length;
 
-  const complianceScore = hasInitialized && totalInitialViolations > 0
-    ? Math.min(100, Math.round(initialCompliance + (100 - initialCompliance) * (solvedCount / totalInitialViolations)))
+  const complianceScore = hasInitialized
+    ? (totalInitialViolations > 0
+        ? Math.min(100, Math.round(initialCompliance + (100 - initialCompliance) * (solvedCount / totalInitialViolations)))
+        : 100)
     : (savedScan?.compliance ?? 0);
 
   const markViolationAsSolved = async (fileNameOrFolderName: string, webUrl?: string) => {
     const saved = JSON.parse(sessionStorage.getItem("lastScan") || "{}");
-    const isFixingFromReport = sessionStorage.getItem("isFixingFromReport") === "true";
     const existingCloneId = sessionStorage.getItem("fixReportCloneId");
     const originalScanId = saved?.id;
 
@@ -309,9 +277,7 @@ export default function ScanResultClient() {
           targetId = clone.id;
           updatedScan = { ...clone, compliance: newScore };
           sessionStorage.setItem("fixReportCloneId", clone.id);
-          if (isFixingFromReport) {
-            sessionStorage.setItem("newClonedReport", JSON.stringify(updatedScan));
-          }
+          sessionStorage.setItem("newClonedReport", JSON.stringify(updatedScan));
         } else {
           console.error("Failed to clone scan record:", clone?.error || "Unknown error");
           targetId = undefined;
@@ -336,7 +302,7 @@ export default function ScanResultClient() {
 
     sessionStorage.setItem("lastScan", JSON.stringify(updatedScan));
 
-    if (isFixingFromReport && targetId) {
+    if ((isFixingFromReport || existingCloneId) && targetId) {
       sessionStorage.setItem("newClonedReport", JSON.stringify(updatedScan));
     }
 
@@ -397,41 +363,6 @@ export default function ScanResultClient() {
     // Mark data loading as complete
     setDataLoadedFromApi(true);
 
-    // If this scan was opened from a report record, preserve that report's issues
-    // and mark any of those issues that are already resolved in the current folder as previously fixed.
-    try {
-      const saved = JSON.parse(sessionStorage.getItem("lastScan") || "{}") as { parentReportId?: string; logs?: ScanLog[] };
-      const newCloned = JSON.parse(sessionStorage.getItem("newClonedReport") || "null") as { parentReportId?: string; logs?: ScanLog[] } | null;
-      const isReportFix = sessionStorage.getItem("isFixingFromReport") === "true";
-      const reportLogs = (saved.logs && saved.logs.length > 0) ? saved.logs : (newCloned?.logs || []);
-      const currentViolations = computeCurrentViolations(loadedTemplate, currentFilesData);
-      const currentFiles = currentViolations.map(v => v.file);
-
-      if (isReportFix && reportLogs.length > 0) {
-        setParentScan(saved || null);
-        const reportViolations = reportLogs.map((l: ScanLog) => ({ type: l.rule || 'Violation', file: l.file, expected: l.expected, isSolved: false, webUrl: l.webUrl } as Violation));
-        setParentViolations(reportViolations);
-        const reportFiles = reportViolations.map(v => v.file).filter(Boolean);
-        const prevFixed = reportFiles.filter((file: string) => !currentFiles.includes(file));
-        setPreviousFixedIssues(prevFixed);
-      } else {
-        const parentId = saved?.parentReportId || newCloned?.parentReportId;
-        if (parentId) {
-          const pres = await fetch(`/api/scans/${parentId}`);
-          if (pres.ok) {
-            const parent = await pres.json();
-            setParentScan(parent || null);
-            const pViolations = (parent.logs || []).map((l: ScanLog) => ({ type: l.rule || 'Violation', file: l.file, expected: l.expected, isSolved: false, webUrl: l.webUrl } as Violation));
-            setParentViolations(pViolations);
-            const parentFiles = (parent.logs || []).map((l: ScanLog) => l.file).filter(Boolean);
-            const prevFixed = parentFiles.filter((f: string) => !currentFiles.includes(f));
-            setPreviousFixedIssues(prevFixed);
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Failed to load parent scan:", err);
-    }
   };
 
   useEffect(() => {
@@ -440,9 +371,9 @@ export default function ScanResultClient() {
       await loadScanData();
       setIsScanning(false);
 
-      const isFromReport = sessionStorage.getItem("isFixingFromReport");
-      if (isFromReport === "true") {
-        setHasSelectedFixNow(true);
+      const isFromReport = sessionStorage.getItem("isFixingFromReport") === "true";
+      if (isFromReport) {
+        setIsFixingFromReport(true);
         sessionStorage.removeItem("isFixingFromReport");
       }
     }
@@ -502,21 +433,41 @@ export default function ScanResultClient() {
         }
       });
 
-      const initialViolations = [
-        ...missingFilesLocal.map((f: string) => ({ type: "Missing File", file: f, isSolved: false, webUrl: null })),
-        ...missingFoldersLocal.map((f: string) => ({ type: "Missing Folder", file: f, isSolved: false, webUrl: null })),
-        ...wrongFilenameLocal.map((w: { entry: FileEntry; expected: string }) => ({ type: "Wrong Filename", file: w.entry.name, expected: w.expected, isSolved: false, webUrl: null, id: w.entry.id })),
-        ...otherUnknownLocal.map((f: FileEntry) => ({ type: "Wrong Folder", file: f.name, isSolved: false, webUrl: null, id: f.id }))
-      ];
+      const saved = typeof window !== "undefined" ? JSON.parse(sessionStorage.getItem("lastScan") || "{}") : {};
+      const savedLogs = Array.isArray(saved?.logs) ? saved.logs : [];
+      const isFixOpening = isFixingFromReport;
+
+      const savedLogViolations: Violation[] = savedLogs.length > 0 && !isFixOpening
+        ? savedLogs.map((log: any) => ({
+          type: log.type || log.rule || "Violation",
+          file: log.file,
+          expected: log.expected || undefined,
+          isSolved: false,
+          webUrl: log.webUrl || null,
+          id: log.id
+        }))
+        : [];
+
+      const initialViolations = savedLogViolations.length > 0
+        ? savedLogViolations
+        : [
+          ...missingFilesLocal.map((f: string) => ({ type: "Missing File", file: f, isSolved: false, webUrl: null })),
+          ...missingFoldersLocal.map((f: string) => ({ type: "Missing Folder", file: f, isSolved: false, webUrl: null })),
+          ...wrongFilenameLocal.map((w: { entry: FileEntry; expected: string }) => ({ type: "Wrong Filename", file: w.entry.name, expected: w.expected, isSolved: false, webUrl: null, id: w.entry.id })),
+          ...otherUnknownLocal.map((f: FileEntry) => ({ type: "Wrong Folder", file: f.name, isSolved: false, webUrl: null, id: f.id }))
+        ];
 
       setViolationsState(initialViolations);
       
-      const saved = JSON.parse(sessionStorage.getItem("lastScan") || "{}");
-      const baseComp = saved?.compliance ?? 0;
+      const recalculatedCompliance = reqFiles.length === 0
+        ? 100
+        : Math.round(((reqFiles.length - missingFilesLocal.length) / reqFiles.length) * 100);
+
+      const baseComp = isFixOpening ? recalculatedCompliance : (saved?.compliance ?? 0);
       setInitialCompliance(baseComp);
       setHasInitialized(true);
     }
-  }, [templateData, realFiles, dataLoadedFromApi, hasInitialized]);
+  }, [templateData, realFiles, dataLoadedFromApi, hasInitialized, isFixingFromReport]);
 
   useEffect(() => {
   async function loadRules() {
@@ -1114,36 +1065,6 @@ export default function ScanResultClient() {
               </div>
             )}
 
-            {/* Previous scan required compliance (show what was fixed later) */}
-            {parentScan && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between pl-2">
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest">Previous Scan — Required Compliance</h4>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50/30 rounded-2xl p-4 space-y-2 border border-gray-100">
-                  {parentViolations.length === 0 ? (
-                    <div className="text-sm text-gray-500">No recorded issues in previous scan.</div>
-                  ) : (
-                    parentViolations.map((pv, pidx) => (
-                      <div key={pidx} className="flex items-center justify-between p-2 rounded-lg bg-white/60 border border-gray-50 text-sm">
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-gray-800">{pv.file}</span>
-                          <span className="text-xs text-gray-500">{pv.type}</span>
-                        </div>
-                        {previousFixedIssues.includes(pv.file) ? (
-                          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-1 rounded-md">Previously Fixed</span>
-                        ) : (
-                          <span className="text-[10px] font-black uppercase tracking-wider text-gray-500 bg-gray-100 px-2 py-1 rounded-md">Active</span>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
 
             <div className="space-y-4">
               <div className="flex items-center justify-between pl-2">
@@ -1159,16 +1080,11 @@ export default function ScanResultClient() {
                     </svg>
                   </button>
                 </div>
-                {previousFixedIssues && previousFixedIssues.length > 0 && (
-                  <div className="text-xs text-gray-500 italic">
-                    Previous fixed issues: {previousFixedIssues.join(", ")}
-                  </div>
-                )}
               </div>
 
               <div className="bg-gray-50/50 rounded-3xl p-6 space-y-4 max-h-[480px] overflow-y-auto border border-gray-100 shadow-inner">
                 <div className="space-y-3">
-                  {displayedViolations.length === 0 ? (
+                  {complianceItems.length === 0 ? (
                     <div className="text-emerald-600 font-bold p-8 text-center flex flex-col items-center justify-center gap-2">
                       <span className="text-4xl animate-bounce">🎉</span>
                       <span className="text-lg font-black uppercase tracking-widest">No issues found</span>
