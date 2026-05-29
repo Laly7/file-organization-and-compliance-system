@@ -154,29 +154,8 @@
     }
   ],
   "stats": {
-    "totalFoldersScanned": 1,
+    "totalFoldersScanned": 0,
     "lastScanDate": "None",
-    "recentScans": [
-      {
-        "id": "8380350d-82d4-49a7-aa88-93e0cca7d80c",
-        "auditId": "AUD-2a8b3d70-3880-4b5a-85fd-4592ccc3fc1d",
-        "folder": "Project_2026_Test",
-        "folderId": "D6767532AD5C9FB2!s5cbadab0b6494b9e895197e0d10330ed",
-        "template": "Project Template",
-        "templateId": "t_1778124179454",
-        "date": "28/05/2026, 9:47:58 pm",
-        "status": "Incomplete",
-        "compliance": 67,
-        "totalFiles": 4,
-        "logs": [
-          {
-            "file": "Report.pdf",
-            "rule": "Template Missing File",
-            "violation": true,
-            "timestamp": "2026-05-28T13:47:58.412Z"
-          }
-        ]
-      }
-    ]
+    "recentScans": []
   }
 }
