@@ -186,7 +186,7 @@ export default function ScanResultClient() {
   ];
 
   const displayedViolations = violationsState.length > 0
-    ? violationsState.filter(v => !(v.type === "Wrong Folder" && v.isSolved))
+    ? violationsState.filter(v => !(v.type === "Wrong Folder" && v.isSolved && !isHistoricalReportView))
     : violations.map(v => ({ ...v, isSolved: false, webUrl: null }));
 
   const complianceItems: Violation[] = displayedViolations;
@@ -202,6 +202,9 @@ export default function ScanResultClient() {
     ? JSON.parse(sessionStorage.getItem("lastScan") || "null")
     : null;
 
+  const isHistoricalReportView = isFixingFromReport && !!savedScan;
+  const hasSavedScanLogs = Array.isArray(savedScan?.logs) && savedScan.logs.length > 0;
+
   console.log("Saved Scan:", savedScan);
   console.log("Compliance:", savedScan?.compliance);
   
@@ -209,10 +212,12 @@ export default function ScanResultClient() {
   const solvedCount = violationsState.filter(v => v.isSolved).length;
 
   const complianceScore = hasInitialized
-    ? (totalInitialViolations > 0
-        ? Math.min(100, Math.round(initialCompliance + (100 - initialCompliance) * (solvedCount / totalInitialViolations)))
-        : 100)
-    : (savedScan?.compliance ?? 0);
+    ? isHistoricalReportView
+      ? Number(savedScan?.compliance ?? initialCompliance)
+      : (totalInitialViolations > 0
+          ? Math.min(100, Math.round(initialCompliance + (100 - initialCompliance) * (solvedCount / totalInitialViolations)))
+          : 100)
+    : Number(savedScan?.compliance ?? 0);
 
   const markViolationAsSolved = async (fileNameOrFolderName: string, webUrl?: string) => {
     const saved = JSON.parse(sessionStorage.getItem("lastScan") || "{}");
@@ -435,7 +440,7 @@ export default function ScanResultClient() {
 
       const saved = typeof window !== "undefined" ? JSON.parse(sessionStorage.getItem("lastScan") || "{}") : {};
       const savedLogs = Array.isArray(saved?.logs) ? saved.logs : [];
-      const isFixOpening = isFixingFromReport;
+      const useSavedLogs = savedLogs.length > 0;
 
       const normalizeSavedLogType = (type: string | undefined, rule?: string) => {
         const normalized = (type || rule || "").toString();
@@ -454,15 +459,44 @@ export default function ScanResultClient() {
         return normalized || "Violation";
       };
 
-      const savedLogViolations: Violation[] = savedLogs.length > 0 && !isFixOpening
-        ? savedLogs.map((log: any) => ({
-          type: normalizeSavedLogType(log.type, log.rule),
-          file: log.file,
-          expected: log.expected || undefined,
-          isSolved: false,
-          webUrl: log.webUrl || null,
-          id: log.id
-        }))
+      const isViolationNowResolved = (violation: Violation) => {
+        const normalizedName = violation.file.trim().toLowerCase();
+        if (violation.type === "Missing File") {
+          return fileEntriesLocal.some((f) => !f.isFolder && f.name.trim().toLowerCase() === normalizedName);
+        }
+        if (violation.type === "Missing Folder") {
+          return realFiles.some((f) => f.isFolder && f.name.trim().toLowerCase().replace(/\/$/, "") === normalizedName);
+        }
+        if (violation.type === "Wrong Filename") {
+          return violation.expected
+            ? fileEntriesLocal.some((f) => f.name.trim().toLowerCase() === violation.expected.trim().toLowerCase())
+            : false;
+        }
+        if (violation.type === "Wrong Folder") {
+          return !fileEntriesLocal.some((f) => f.name.trim().toLowerCase() === normalizedName);
+        }
+        return false;
+      };
+
+      const savedLogViolations: Violation[] = useSavedLogs
+        ? savedLogs.map((log: any) => {
+          const violationType = normalizeSavedLogType(log.type, log.rule);
+          const violation: Violation = {
+            type: violationType,
+            file: log.file,
+            expected: log.expected || undefined,
+            isSolved: false,
+            webUrl: log.webUrl || null,
+            id: log.id
+          };
+
+          const resolved = isViolationNowResolved(violation);
+          if (resolved) {
+            return { ...violation, isSolved: true, previouslyFixed: true };
+          }
+
+          return violation;
+        })
         : [];
 
       const initialViolations = savedLogViolations.length > 0
@@ -474,17 +508,19 @@ export default function ScanResultClient() {
           ...otherUnknownLocal.map((f: FileEntry) => ({ type: "Wrong Folder", file: f.name, isSolved: false, webUrl: null, id: f.id }))
         ];
 
-      setViolationsState(initialViolations);
-      
       const totalRequirements = reqFiles.length + reqFolders.length;
-      const recalculatedCompliance = totalRequirements === 0
-        ? 100
-        : Math.round(
-          ((reqFiles.length - missingFilesLocal.length) + (reqFolders.length - missingFoldersLocal.length)) /
-          totalRequirements * 100
-        );
+      const savedCompliance = typeof saved?.compliance === "number" ? saved.compliance : undefined;
+      const initialComplianceValue = useSavedLogs && savedCompliance != null
+        ? savedCompliance
+        : totalRequirements === 0
+          ? 100
+          : Math.round(
+            ((reqFiles.length - missingFilesLocal.length) + (reqFolders.length - missingFoldersLocal.length)) /
+            totalRequirements * 100
+          );
 
-      setInitialCompliance(recalculatedCompliance);
+      setViolationsState(initialViolations);
+      setInitialCompliance(initialComplianceValue);
       setHasInitialized(true);
     }
   }, [templateData, realFiles, dataLoadedFromApi, hasInitialized, isFixingFromReport]);
