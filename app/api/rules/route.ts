@@ -14,9 +14,12 @@ export async function POST(req: Request) {
   const newRule = {
     id: randomUUID(),
     name: body.name,
+    type: body.type || "naming",
     condition: body.condition,
+    action: body.action || null,
+    status: body.status === false ? false : true,
     template: body.template || "",
-    status: true
+    templateId: body.templateId || null
   };
 
   db.rules = db.rules || [];

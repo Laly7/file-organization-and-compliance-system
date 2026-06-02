@@ -28,6 +28,13 @@ export async function POST(req: Request) {
       (t: any) => t.id === templateId
     );
 
+    if (!template) {
+      return NextResponse.json(
+        { error: "Template not found" },
+        { status: 400 }
+      );
+    }
+
     const rules = db.rules.filter(
       (r: any) =>
         selectedRuleIds.includes(r.id)

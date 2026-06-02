@@ -51,9 +51,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const rules = db.rules.filter(
-      (r: any) => r.templateId === templateId
-    );
+    const rules = db.rules.filter((r: any) => {
+      return (
+        r.templateId === templateId ||
+        (typeof r.template === "string" && r.template === template.name)
+      );
+    });
 
     const files = await getDriveFilesRecursively(
       token,
@@ -97,36 +100,33 @@ export async function POST(req: Request) {
         )
     : 100;
 
+    const createdAt = new Date().toISOString();
+    const totalFolders = files.filter((f: any) => f.isFolder).length;
     const scan = {
       id: randomUUID(),
-
       auditId: `AUD-${randomUUID()}`,
-
       folder: folderName || "Unknown Folder",
-
+      folderName: folderName || "Unknown Folder",
       folderId,
-
       template: template.name,
-      
       templateId: template.id,
-
+      createdAt,
       date: new Date().toLocaleString(),
-
       status:
         compliance >= 80
           ? "Completed"
           : "Incomplete",
-
       compliance,
-
+      complianceScore: compliance,
       totalFiles: files.length,
-
+      totalFolders,
       logs
     };
 
     if (!db.stats) {
       db.stats = {
         totalFoldersScanned: 0,
+        lastScanDate: "None",
         recentScans: []
       };
     }
@@ -136,9 +136,8 @@ export async function POST(req: Request) {
     }
 
     db.stats.recentScans.push(scan);
-
-    db.stats.totalFoldersScanned =
-      db.stats.recentScans.length;
+    db.stats.totalFoldersScanned = db.stats.recentScans.length;
+    db.stats.lastScanDate = createdAt;
 
     await saveDbData(db);
 

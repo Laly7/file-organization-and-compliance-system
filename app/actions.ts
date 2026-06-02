@@ -56,21 +56,25 @@ export async function addRule(formData: FormData) {
   const db = await getDbData();
   if (!db) return false;
 
+  const conditionValue = (formData.get("condition") as string) || "Wrong title";
+  const ruleType =
+    conditionValue === "Wrong folder"
+      ? "folder"
+      : conditionValue === "Missing file"
+      ? "missing"
+      : "naming";
+
   const newRule = {
     id: randomUUID(),
-
     name: (formData.get("name") as string) || "New Rule",
-
-    type: (formData.get("type") as string) || "naming",
-
-    condition: formData.get("condition") as string,
+    type: ruleType,
+    condition: conditionValue,
     action: {
       type: formData.get("action") as string
     },
-
     status: true,
-
-    templateId: formData.get("templateId") as string
+    template: (formData.get("template") as string) || "",
+    templateId: (formData.get("templateId") as string) || null
   };
 
   db.rules.push(newRule);
@@ -88,20 +92,21 @@ export async function updateRule(id: string, formData: FormData) {
 
   if (index === -1) return false;
 
+  const conditionValue = (formData.get("condition") as string) || db.rules[index].condition;
+  const ruleType =
+    conditionValue === "Wrong folder"
+      ? "folder"
+      : conditionValue === "Missing file"
+      ? "missing"
+      : "naming";
+
   db.rules[index] = {
     ...db.rules[index],
-
-    name:
-      (formData.get("name") as string) ||
-      db.rules[index].name,
-
-    condition:
-      (formData.get("condition") as string) ||
-      db.rules[index].condition,
-
-    template:
-      (formData.get("template") as string) ||
-      db.rules[index].template
+    name: (formData.get("name") as string) || db.rules[index].name,
+    type: ruleType,
+    condition: conditionValue,
+    template: (formData.get("template") as string) || db.rules[index].template,
+    templateId: (formData.get("templateId") as string) || db.rules[index].templateId
   };
 
   await saveDbData(db);

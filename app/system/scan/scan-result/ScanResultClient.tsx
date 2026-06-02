@@ -437,9 +437,26 @@ export default function ScanResultClient() {
       const savedLogs = Array.isArray(saved?.logs) ? saved.logs : [];
       const isFixOpening = isFixingFromReport;
 
+      const normalizeSavedLogType = (type: string | undefined, rule?: string) => {
+        const normalized = (type || rule || "").toString();
+        if (normalized === "Template Missing File" || normalized === "Missing file detected") {
+          return "Missing File";
+        }
+        if (normalized === "Template Missing Folder" || normalized === "Missing folder detected") {
+          return "Missing Folder";
+        }
+        if (normalized === "Wrong Placement" || normalized === "Wrong Folder") {
+          return "Wrong Folder";
+        }
+        if (normalized === "Wrong Filename" || normalized === "Invalid File Naming") {
+          return "Wrong Filename";
+        }
+        return normalized || "Violation";
+      };
+
       const savedLogViolations: Violation[] = savedLogs.length > 0 && !isFixOpening
         ? savedLogs.map((log: any) => ({
-          type: log.type || log.rule || "Violation",
+          type: normalizeSavedLogType(log.type, log.rule),
           file: log.file,
           expected: log.expected || undefined,
           isSolved: false,
@@ -459,12 +476,15 @@ export default function ScanResultClient() {
 
       setViolationsState(initialViolations);
       
-      const recalculatedCompliance = reqFiles.length === 0
+      const totalRequirements = reqFiles.length + reqFolders.length;
+      const recalculatedCompliance = totalRequirements === 0
         ? 100
-        : Math.round(((reqFiles.length - missingFilesLocal.length) / reqFiles.length) * 100);
+        : Math.round(
+          ((reqFiles.length - missingFilesLocal.length) + (reqFolders.length - missingFoldersLocal.length)) /
+          totalRequirements * 100
+        );
 
-      const baseComp = isFixOpening ? recalculatedCompliance : (saved?.compliance ?? 0);
-      setInitialCompliance(baseComp);
+      setInitialCompliance(recalculatedCompliance);
       setHasInitialized(true);
     }
   }, [templateData, realFiles, dataLoadedFromApi, hasInitialized, isFixingFromReport]);

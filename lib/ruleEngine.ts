@@ -6,12 +6,14 @@ import {
 } from "@/lib/onedrive";
 
 export interface Rule {
-  id: number;
+  id: string;
   name: string;
   type: "naming" | "folder" | "missing";
   condition: any;
   action: any;
   status: boolean;
+  template?: string;
+  templateId?: string;
 }
 
 export interface Template {
@@ -20,6 +22,7 @@ export interface Template {
   requiredFolders: string[];
   requiredFiles: string[];
   namingRule: string;
+  optionalFiles: string[];
 }
 
 export interface FileItem {
@@ -42,21 +45,26 @@ export function analyzeFiles(
   );
 
   for (const file of files) {
-
     for (const rule of activeRules) {
-
-      const violated = checkRule(rule, file);
-
+      const violated = checkRule(rule, file, template);
       if (violated) {
+        const type =
+          rule.type === "naming"
+            ? "Wrong Filename"
+            : rule.type === "folder"
+            ? "Wrong Folder"
+            : rule.type === "missing"
+            ? "Missing File"
+            : "Violation";
 
         logs.push({
           file: file.name,
           ruleId: rule.id,
           rule: rule.name,
+          type,
           violation: true,
           timestamp: new Date().toISOString()
         });
-
       }
     }
   }
@@ -67,14 +75,13 @@ export function analyzeFiles(
   );
 
   for (const missing of missingFiles) {
-
     logs.push({
       file: missing,
       rule: "Template Missing File",
+      type: "Missing File",
       violation: true,
       timestamp: new Date().toISOString()
     });
-
   }
 
   const missingFolders = checkMissingFolders(
@@ -83,14 +90,13 @@ export function analyzeFiles(
   );
 
   for (const missing of missingFolders) {
-
     logs.push({
       file: missing,
       rule: "Template Missing Folder",
+      type: "Missing Folder",
       violation: true,
       timestamp: new Date().toISOString()
     });
-
   }
 
   return logs;
@@ -107,15 +113,22 @@ export async function processFiles(
 
   for (const file of files) {
     for (const rule of activeRules) {
-
-      const violated = checkRule(rule, file);
-
+      const violated = checkRule(rule, file, template);
       if (violated) {
         const result = await executeRule(rule, file, token, template);
+        const type =
+          rule.type === "naming"
+            ? "Wrong Filename"
+            : rule.type === "folder"
+            ? "Wrong Folder"
+            : rule.type === "missing"
+            ? "Missing File"
+            : "Violation";
 
         logs.push({
           file: file.name,
           rule: rule.name,
+          type,
           action: result,
           timestamp: new Date().toISOString()
         });
@@ -148,19 +161,27 @@ export async function processFiles(
   return logs;
 }
 
-function checkRule(rule: Rule, file: FileItem): boolean {
+function checkRule(rule: Rule, file: FileItem, template: Template): boolean {
   if (file.isFolder) return false;
-  if (!rule.condition || typeof rule.condition !== "object") return false;
+  const condition = rule.condition;
 
   switch (rule.type) {
+    case "naming": {
+      const pattern =
+        typeof condition === "object" && condition?.pattern
+          ? condition.pattern
+          : template.namingRule || ".*";
+      return !validateNaming(file.name, pattern);
+    }
 
-    case "naming":
-      if (!rule.condition.pattern) return false;
-      return !validateNaming(file.name, rule.condition.pattern);
-
-    case "folder":
-      if (!rule.condition.folder) return false;
-      return !file.path?.includes(rule.condition.folder);
+    case "folder": {
+      const folderToCheck =
+        typeof condition === "object" && condition?.folder
+          ? condition.folder
+          : template.requiredFolders?.[0] || "";
+      if (!folderToCheck) return false;
+      return !file.path?.includes(folderToCheck);
+    }
 
     case "missing":
       return false;
