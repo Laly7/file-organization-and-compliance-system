@@ -3,7 +3,11 @@
     {
       "id": "t_1778124179454",
       "name": "Project Template",
-      "requiredFolders": [],
+      "requiredFolders": [
+        "Doc",
+        "Pdf",
+        "Excel"
+      ],
       "requiredFiles": [
         "Report.pdf",
         "Presentation.pptx",

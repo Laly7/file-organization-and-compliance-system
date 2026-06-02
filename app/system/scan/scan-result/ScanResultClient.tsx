@@ -522,6 +522,7 @@ export default function ScanResultClient() {
 
         await markViolationAsSolved(targetName, webUrl);
         await loadScanData();
+        setShowIssueModal(false);
       } else {
         const err = await res.json();
         alert(`Upload failed: ${err.error || "Unknown error"}\nDetails: ${JSON.stringify(err.details || {})}`);
@@ -573,7 +574,6 @@ export default function ScanResultClient() {
     }
   };
 
-  // Open the folder in file explorer so user can manually move the file
   const handleModalMoveFile = async () => {
     if (!selectedViolation) return;
 
@@ -583,22 +583,42 @@ export default function ScanResultClient() {
       return;
     }
 
+    if (!selectedViolation.id) {
+      alert("Unable to move this file automatically.");
+      return;
+    }
+
     setIsMovingFile(selectedViolation.file);
     try {
-      const res = await fetch("/api/onedrive/open-folder", {
+      const res = await fetch("/api/onedrive/move-file-out", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ folderId })
+        body: JSON.stringify({
+          fileId: selectedViolation.id,
+          scanFolderId: folderId
+        })
       });
 
-      if (res.ok) {
-        showNotification('success', `File explorer opened. Move "${selectedViolation.file}" out of this folder, then click Verify to confirm.`);
-      } else {
-        showNotification('warning', `Unable to open file explorer automatically. Please navigate to your synced OneDrive folder and move "${selectedViolation.file}" manually, then click Verify to confirm.`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Move failed");
       }
+
+      showNotification('success', `Moved "${selectedViolation.file}" out of the scan folder successfully.`);
+
+      setViolationsState(prev => prev.map(v => {
+        if (v.id && v.id === selectedViolation.id) {
+          return { ...v, isSolved: true, webUrl: data.file?.webUrl };
+        }
+        return v;
+      }));
+
+      await markViolationAsSolved(selectedViolation.file, data.file?.webUrl);
+      await loadScanData();
+      setShowIssueModal(false);
     } catch (err) {
-      console.error("Error opening folder:", err);
-      showNotification('warning', `Unable to open file explorer. Please navigate to your synced OneDrive folder and move "${selectedViolation.file}" manually, then click Verify to confirm.`);
+      console.error("Move File Error:", err);
+      showNotification('warning', `Unable to move the file automatically. Please resolve it manually in OneDrive or use Verify to re-check.`);
     } finally {
       setIsMovingFile(null);
     }
@@ -874,6 +894,20 @@ export default function ScanResultClient() {
             finalViolations = updated;
           }
         }
+      }
+
+      let newFiles: FileEntry[] = [];
+      let newFileNames: string[] = [];
+      try {
+        const updatedFiles = await fetch(
+          `/api/onedrive/files?folderId=${sessionStorage.getItem("scanFolderId")}`
+        ).then((res) => res.json());
+        newFiles = (updatedFiles.files || []) as FileEntry[];
+        newFileNames = newFiles.map((f: FileEntry) => f.name.trim().toLowerCase());
+      } catch (err) {
+        console.error("Error loading updated folder contents:", err);
+        newFiles = [];
+        newFileNames = [];
       }
 
       const newMissing = requiredFiles.filter(
@@ -1303,7 +1337,7 @@ export default function ScanResultClient() {
                         disabled={isMovingFile === selectedViolation.file}
                         className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-yellow-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-yellow-700 disabled:bg-gray-200 disabled:text-gray-400"
                       >
-                        {isMovingFile === selectedViolation.file ? 'Opening...' : 'Move'}
+                        {isMovingFile === selectedViolation.file ? 'Moving...' : 'Move Out'}
                       </button>
                       <button
                         onClick={verifyMovedFile}
