@@ -158,6 +158,7 @@
     }
   ],
   "stats": {
+<<<<<<< HEAD
     "totalFoldersScanned": 2,
     "lastScanDate": "6/3/2026, 3:18:40 PM",
     "recentScans": [
@@ -299,5 +300,10 @@
         "parentReportId": "f1a834bd-7d93-42ba-8e1a-40498209fcc9"
       }
     ]
+=======
+    "totalFoldersScanned": 0,
+    "lastScanDate": "03/06/2026, 3:18:03 pm",
+    "recentScans": []
+>>>>>>> d0eeff54c02b5c868ff8a1c2345529421486da02
   }
 }
