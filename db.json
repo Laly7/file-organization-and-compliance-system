@@ -158,8 +158,146 @@
     }
   ],
   "stats": {
-    "totalFoldersScanned": 0,
-    "lastScanDate": "03/06/2026, 2:41:19 pm",
-    "recentScans": []
+    "totalFoldersScanned": 2,
+    "lastScanDate": "6/3/2026, 3:18:40 PM",
+    "recentScans": [
+      {
+        "id": "f1a834bd-7d93-42ba-8e1a-40498209fcc9",
+        "auditId": "AUD-71a1d807-0d64-4e2f-8cac-fed69d472950",
+        "folder": "FYP",
+        "folderName": "FYP",
+        "folderId": "01B5L5FTI2HCZT2HAWLRGZAUJK2DNEH5FE",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "createdAt": "2026-06-03T07:18:40.424Z",
+        "date": "6/3/2026, 3:18:40 PM",
+        "status": "Incomplete",
+        "compliance": 0,
+        "complianceScore": 0,
+        "totalFiles": 2,
+        "totalFolders": 0,
+        "logs": [
+          {
+            "file": "Design Report.docx",
+            "rule": "Template Wrong Filename",
+            "type": "Wrong Filename",
+            "expected": "Report.pdf",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.399Z"
+          },
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "type": "Missing File",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.399Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "type": "Missing File",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.399Z"
+          },
+          {
+            "file": "Doc",
+            "rule": "Template Missing Folder",
+            "type": "Missing Folder",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.399Z"
+          },
+          {
+            "file": "Presentation",
+            "rule": "Template Missing Folder",
+            "type": "Missing Folder",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.399Z"
+          },
+          {
+            "file": "Excel",
+            "rule": "Template Missing Folder",
+            "type": "Missing Folder",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.400Z"
+          },
+          {
+            "file": "CSS301 System Requirement Specification .pdf",
+            "rule": "Template Wrong Placement",
+            "type": "Wrong Folder",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.400Z"
+          }
+        ]
+      },
+      {
+        "id": "ecc13344-fb89-48e6-8c77-803a671abd9e",
+        "auditId": "AUD-46c7494a-5352-4be5-b385-9c48d156f0b5",
+        "folder": "FYP",
+        "folderName": "FYP",
+        "folderId": "01B5L5FTI2HCZT2HAWLRGZAUJK2DNEH5FE",
+        "template": "Project Template",
+        "templateId": "t_1778124179454",
+        "createdAt": "2026-06-03T07:18:40.424Z",
+        "date": "6/3/2026, 3:19:04 PM",
+        "status": "Incomplete",
+        "compliance": 33,
+        "complianceScore": 0,
+        "totalFiles": 2,
+        "totalFolders": 0,
+        "logs": [
+          {
+            "file": "Design Report.docx",
+            "rule": "Template Wrong Filename",
+            "type": "Wrong Filename",
+            "expected": "Report.pdf",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.399Z"
+          },
+          {
+            "file": "Presentation.pptx",
+            "rule": "Template Missing File",
+            "type": "Missing File",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.399Z"
+          },
+          {
+            "file": "Budget.xlsx",
+            "rule": "Template Missing File",
+            "type": "Missing File",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.399Z"
+          },
+          {
+            "file": "Doc",
+            "rule": "Template Missing Folder",
+            "type": "Missing Folder",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.399Z"
+          },
+          {
+            "file": "Presentation",
+            "rule": "Template Missing Folder",
+            "type": "Missing Folder",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.399Z"
+          },
+          {
+            "file": "Excel",
+            "rule": "Template Missing Folder",
+            "type": "Missing Folder",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.400Z"
+          },
+          {
+            "file": "CSS301 System Requirement Specification .pdf",
+            "rule": "Template Wrong Placement",
+            "type": "Wrong Folder",
+            "violation": true,
+            "timestamp": "2026-06-03T07:18:40.400Z"
+          }
+        ],
+        "parentReportId": "f1a834bd-7d93-42ba-8e1a-40498209fcc9"
+      }
+    ]
   }
 }
