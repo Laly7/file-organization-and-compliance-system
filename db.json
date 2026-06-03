@@ -3,7 +3,11 @@
     {
       "id": "t_1778124179454",
       "name": "Project Template",
-      "requiredFolders": [],
+      "requiredFolders": [
+        "Doc",
+        "Presentation",
+        "Excel"
+      ],
       "requiredFiles": [
         "Report.pdf",
         "Presentation.pptx",
@@ -154,167 +158,59 @@
     }
   ],
   "stats": {
-    "totalFoldersScanned": 4,
-    "lastScanDate": "2026-06-02T14:21:27.661Z",
+    "totalFoldersScanned": 2,
+    "lastScanDate": "03/06/2026, 2:41:19 pm",
     "recentScans": [
       {
-        "id": "c74ed183-d96d-4b93-8153-37a0c78b8be4",
-        "auditId": "AUD-b70601c4-8ce5-48f7-8acb-3f57e432df16",
-        "folder": "Project_2026_Test",
-        "folderName": "Project_2026_Test",
-        "folderId": "01GXTWCM3EGETC2ZKO7NC3T4SUJBJBC4ID",
+        "id": "38d31346-7a18-4add-afdc-a267b51a48be",
+        "auditId": "AUD-793598c2-434b-4b60-bed7-b2e606a82461",
+        "folder": "Project_2026",
+        "folderName": "Project_2026",
+        "folderId": "01JCPGJ6COVMZYJB4P2NEIZ7TEYIRRJSZ6",
         "template": "Project Template",
         "templateId": "t_1778124179454",
-        "createdAt": "2026-06-02T14:21:27.661Z",
-        "date": "02/06/2026, 10:21:27 pm",
-        "status": "Incomplete",
-        "compliance": 0,
-        "complianceScore": 0,
-        "totalFiles": 0,
-        "totalFolders": 0,
+        "createdAt": "2026-06-03T06:41:19.734Z",
+        "date": "03/06/2026, 2:41:19 pm",
+        "status": "Completed",
+        "compliance": 83,
+        "complianceScore": 83,
+        "totalFiles": 8,
+        "totalFolders": 3,
         "logs": [
           {
-            "file": "Report.pdf",
-            "rule": "Template Missing File",
-            "type": "Missing File",
+            "file": "monthly-fees.xlsx",
+            "rule": "Template Wrong Placement",
+            "type": "Wrong Folder",
             "violation": true,
-            "timestamp": "2026-06-02T14:21:27.658Z"
-          },
-          {
-            "file": "Presentation.pptx",
-            "rule": "Template Missing File",
-            "type": "Missing File",
-            "violation": true,
-            "timestamp": "2026-06-02T14:21:27.658Z"
-          },
-          {
-            "file": "Budget.xlsx",
-            "rule": "Template Missing File",
-            "type": "Missing File",
-            "violation": true,
-            "timestamp": "2026-06-02T14:21:27.658Z"
+            "timestamp": "2026-06-03T06:41:19.733Z"
           }
         ]
       },
       {
-        "id": "8cd88a37-5f6e-4128-93fd-6bb454c67f0e",
-        "auditId": "AUD-b5c65e0d-acdf-4b50-95ed-43bbf141f353",
-        "folder": "Project_2026_Test",
-        "folderName": "Project_2026_Test",
-        "folderId": "01GXTWCM3EGETC2ZKO7NC3T4SUJBJBC4ID",
+        "id": "1c132913-2126-455b-9871-9248198b8e7f",
+        "auditId": "AUD-849faa15-5115-456a-8112-e56c87fc2fea",
+        "folder": "Project_2026",
+        "folderName": "Project_2026",
+        "folderId": "01JCPGJ6COVMZYJB4P2NEIZ7TEYIRRJSZ6",
         "template": "Project Template",
         "templateId": "t_1778124179454",
-        "createdAt": "2026-06-02T14:21:27.661Z",
-        "date": "02/06/2026, 10:21:44 pm",
-        "status": "Incomplete",
-        "compliance": 33,
-        "complianceScore": 0,
-        "totalFiles": 0,
-        "totalFolders": 0,
-        "logs": [
-          {
-            "file": "Report.pdf",
-            "rule": "Template Missing File",
-            "type": "Missing File",
-            "violation": true,
-            "timestamp": "2026-06-02T14:21:27.658Z"
-          },
-          {
-            "file": "Presentation.pptx",
-            "rule": "Template Missing File",
-            "type": "Missing File",
-            "violation": true,
-            "timestamp": "2026-06-02T14:21:27.658Z"
-          },
-          {
-            "file": "Budget.xlsx",
-            "rule": "Template Missing File",
-            "type": "Missing File",
-            "violation": true,
-            "timestamp": "2026-06-02T14:21:27.658Z"
-          }
-        ],
-        "parentReportId": "c74ed183-d96d-4b93-8153-37a0c78b8be4"
-      },
-      {
-        "id": "7c6f0571-4e02-4bfb-af0a-ed1431f0d51b",
-        "auditId": "AUD-36382ece-c200-478c-89c6-3c109c7e644b",
-        "folder": "Project_2026_Test",
-        "folderName": "Project_2026_Test",
-        "folderId": "01GXTWCM3EGETC2ZKO7NC3T4SUJBJBC4ID",
-        "template": "Project Template",
-        "templateId": "t_1778124179454",
-        "createdAt": "2026-06-02T14:21:27.661Z",
-        "date": "02/06/2026, 10:22:05 pm",
-        "status": "Incomplete",
-        "compliance": 67,
-        "complianceScore": 0,
-        "totalFiles": 0,
-        "totalFolders": 0,
-        "logs": [
-          {
-            "file": "Report.pdf",
-            "rule": "Template Missing File",
-            "type": "Missing File",
-            "violation": true,
-            "timestamp": "2026-06-02T14:21:27.658Z"
-          },
-          {
-            "file": "Presentation.pptx",
-            "rule": "Template Missing File",
-            "type": "Missing File",
-            "violation": true,
-            "timestamp": "2026-06-02T14:21:27.658Z"
-          },
-          {
-            "file": "Budget.xlsx",
-            "rule": "Template Missing File",
-            "type": "Missing File",
-            "violation": true,
-            "timestamp": "2026-06-02T14:21:27.658Z"
-          }
-        ],
-        "parentReportId": "8cd88a37-5f6e-4128-93fd-6bb454c67f0e"
-      },
-      {
-        "id": "6703b802-77cd-4318-a45c-48d84e669527",
-        "auditId": "AUD-a27f83bc-ece8-4583-9e90-c221ed3eebae",
-        "folder": "Project_2026_Test",
-        "folderName": "Project_2026_Test",
-        "folderId": "01GXTWCM3EGETC2ZKO7NC3T4SUJBJBC4ID",
-        "template": "Project Template",
-        "templateId": "t_1778124179454",
-        "createdAt": "2026-06-02T14:21:27.661Z",
-        "date": "02/06/2026, 10:22:23 pm",
+        "createdAt": "2026-06-03T06:41:19.734Z",
+        "date": "03/06/2026, 2:41:23 pm",
         "status": "Completed",
         "compliance": 100,
-        "complianceScore": 0,
-        "totalFiles": 0,
-        "totalFolders": 0,
+        "complianceScore": 83,
+        "totalFiles": 8,
+        "totalFolders": 3,
         "logs": [
           {
-            "file": "Report.pdf",
-            "rule": "Template Missing File",
-            "type": "Missing File",
+            "file": "monthly-fees.xlsx",
+            "rule": "Template Wrong Placement",
+            "type": "Wrong Folder",
             "violation": true,
-            "timestamp": "2026-06-02T14:21:27.658Z"
-          },
-          {
-            "file": "Presentation.pptx",
-            "rule": "Template Missing File",
-            "type": "Missing File",
-            "violation": true,
-            "timestamp": "2026-06-02T14:21:27.658Z"
-          },
-          {
-            "file": "Budget.xlsx",
-            "rule": "Template Missing File",
-            "type": "Missing File",
-            "violation": true,
-            "timestamp": "2026-06-02T14:21:27.658Z"
+            "timestamp": "2026-06-03T06:41:19.733Z"
           }
         ],
-        "parentReportId": "7c6f0571-4e02-4bfb-af0a-ed1431f0d51b"
+        "parentReportId": "38d31346-7a18-4add-afdc-a267b51a48be"
       }
     ]
   }

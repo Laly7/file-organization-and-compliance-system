@@ -5,6 +5,19 @@ import { getDbData } from "@/lib/db";
 // Lucide icons
 import { Plus, Folder, Calendar, FileText, Eye } from "lucide-react";
 
+function formatDisplayDate(dateString: string) {
+  if (!dateString) return "None";
+  const parsed = new Date(dateString);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    });
+  }
+  return dateString;
+}
+
 type Scan = {
     id: string;
     folder: string;
@@ -95,7 +108,7 @@ export default async function Dashboard() {
                         </p>
 
                         <h3 className="text-2xl font-black text-gray-900 mt-2">
-                            {stats.lastScanDate}
+                            {formatDisplayDate(stats.lastScanDate)}
                         </h3>
                     </div>
                 </div>

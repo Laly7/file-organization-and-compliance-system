@@ -73,32 +73,18 @@ export async function POST(req: Request) {
 
     const requiredFiles = template.requiredFiles || [];
     const requiredFolders = template.requiredFolders || [];
-
-    const realFileNames = files.filter((f: any) => !f.isFolder).map((f: any) =>
-      f.name.trim().toLowerCase()
-    );
-
-    const realFolderNames = files.filter((f: any) => f.isFolder).map((f: any) =>
-      f.name.trim().toLowerCase().replace(/\/$/, "")
-    );
-
-    const matchedFiles = requiredFiles.filter((rf: string) =>
-      realFileNames.includes(rf.trim().toLowerCase())
-    );
-
-    const matchedFolders = requiredFolders.filter((rf: string) =>
-      realFolderNames.includes(rf.trim().toLowerCase().replace(/\/$/, ""))
-    );
-
     const totalRequirements = requiredFiles.length + requiredFolders.length;
-    const totalMatched = matchedFiles.length + matchedFolders.length;
+    const violationCount = logs.length;
 
     const compliance =
-      totalRequirements > 0
-        ? Math.round(
-          (totalMatched / totalRequirements) * 100
-        )
-    : 100;
+      totalRequirements === 0
+        ? 100
+        : Math.max(
+            0,
+            Math.round(
+              ((totalRequirements - violationCount) / totalRequirements) * 100
+            )
+          );
 
     const createdAt = new Date().toISOString();
     const totalFolders = files.filter((f: any) => f.isFolder).length;
@@ -137,7 +123,7 @@ export async function POST(req: Request) {
 
     db.stats.recentScans.push(scan);
     db.stats.totalFoldersScanned = db.stats.recentScans.length;
-    db.stats.lastScanDate = createdAt;
+    db.stats.lastScanDate = scan.date;
 
     await saveDbData(db);
 

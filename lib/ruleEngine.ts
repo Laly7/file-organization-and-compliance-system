@@ -37,46 +37,91 @@ export function analyzeFiles(
   template: Template,
   rules: Rule[]
 ) {
+  return generateTemplateViolations(files, template);
+}
 
+function generateTemplateViolations(
+  files: FileItem[],
+  template: Template
+) {
   const logs: any[] = [];
+  const actualFiles = files.filter((file) => !file.isFolder);
+  const actualFolders = files.filter((file) => file.isFolder);
+  const requiredFiles = template.requiredFiles || [];
+  const optionalFiles = template.optionalFiles || [];
+  const requiredFolders = template.requiredFolders || [];
 
-  const activeRules = rules.filter(
-    r => r.status
+  const normalizeName = (name: string) =>
+    name.trim().toLowerCase().replace(/\/$/, "");
+
+  const tokenizeName = (name: string) =>
+    name
+      .replace(/\.[^/.]+$/, "")
+      .split(/[^a-z0-9]+/gi)
+      .map((token) => token.trim().toLowerCase())
+      .filter(Boolean);
+
+  const optionalSet = new Set(
+    optionalFiles.map((optionalFile) => normalizeName(optionalFile))
   );
 
-  for (const file of files) {
-    for (const rule of activeRules) {
-      const violated = checkRule(rule, file, template);
-      if (violated) {
-        const type =
-          rule.type === "naming"
-            ? "Wrong Filename"
-            : rule.type === "folder"
-            ? "Wrong Folder"
-            : rule.type === "missing"
-            ? "Missing File"
-            : "Violation";
+  const usedFileIds = new Set<string>();
 
-        logs.push({
-          file: file.name,
-          ruleId: rule.id,
-          rule: rule.name,
-          type,
-          violation: true,
-          timestamp: new Date().toISOString()
-        });
-      }
+  for (const requiredFile of requiredFiles) {
+    const requiredNormalized = normalizeName(requiredFile);
+    const exactMatch = actualFiles.find(
+      (file) => normalizeName(file.name) === requiredNormalized
+    );
+
+    if (exactMatch) {
+      usedFileIds.add(exactMatch.id);
+      continue;
     }
-  }
 
-  const missingFiles = checkMissingFiles(
-    files,
-    template
-  );
+    const caseInsensitiveMatch = actualFiles.find(
+      (file) =>
+        !usedFileIds.has(file.id) &&
+        file.name.trim().toLowerCase() === requiredFile.trim().toLowerCase()
+    );
 
-  for (const missing of missingFiles) {
+    if (caseInsensitiveMatch) {
+      usedFileIds.add(caseInsensitiveMatch.id);
+      logs.push({
+        file: caseInsensitiveMatch.name,
+        rule: "Template Wrong Filename",
+        type: "Wrong Filename",
+        expected: requiredFile,
+        violation: true,
+        timestamp: new Date().toISOString()
+      });
+      continue;
+    }
+
+    const requiredTokens = tokenizeName(requiredFile);
+    const tokenMatch = actualFiles.find((file) => {
+      if (usedFileIds.has(file.id)) return false;
+      const fileTokens = tokenizeName(file.name);
+      return (
+        fileTokens.length > 0 &&
+        requiredTokens.some((token) => fileTokens.includes(token))
+      );
+    });
+
+    if (tokenMatch) {
+      usedFileIds.add(tokenMatch.id);
+      logs.push({
+        file: tokenMatch.name,
+        rule: "Template Wrong Filename",
+        type: "Wrong Filename",
+        expected: requiredFile,
+        violation: true,
+        timestamp: new Date().toISOString()
+      });
+      continue;
+    }
+
     logs.push({
-      file: missing,
+      file: requiredFile,
       rule: "Template Missing File",
       type: "Missing File",
       violation: true,
@@ -84,16 +129,30 @@ export function analyzeFiles(
     });
   }
 
-  const missingFolders = checkMissingFolders(
-    files,
-    template
+  const actualFolderNames = new Set(
+    actualFolders.map((folder) => normalizeName(folder.name))
   );
 
-  for (const missing of missingFolders) {
+  for (const requiredFolder of requiredFolders) {
+    if (!actualFolderNames.has(normalizeName(requiredFolder))) {
+      logs.push({
+        file: requiredFolder,
+        rule: "Template Missing Folder",
+        type: "Missing Folder",
+        violation: true,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  for (const file of actualFiles) {
+    if (usedFileIds.has(file.id)) continue;
+    if (optionalSet.has(normalizeName(file.name))) continue;
+
     logs.push({
-      file: missing,
-      rule: "Template Missing Folder",
-      type: "Missing Folder",
+      file: file.name,
+      rule: "Template Wrong Placement",
+      type: "Wrong Folder",
       violation: true,
       timestamp: new Date().toISOString()
     });

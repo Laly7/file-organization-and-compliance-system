@@ -185,6 +185,14 @@ export default function ScanResultClient() {
     ...otherUnknownFiles.map(f => ({ type: "Wrong Folder", file: f.name, id: f.id, webUrl: f.webUrl }))
   ];
 
+  const savedScan =
+    typeof window !== "undefined"
+      ? JSON.parse(sessionStorage.getItem("lastScan") || "null")
+      : null;
+
+  const isHistoricalReportView = isFixingFromReport && !!savedScan;
+  const hasSavedScanLogs = Array.isArray(savedScan?.logs) && savedScan.logs.length > 0;
+
   const displayedViolations = violationsState.length > 0
     ? violationsState.filter(v => !(v.type === "Wrong Folder" && v.isSolved && !isHistoricalReportView))
     : violations.map(v => ({ ...v, isSolved: false, webUrl: null }));
@@ -196,14 +204,6 @@ export default function ScanResultClient() {
   const hasIssues = hasInitialized 
     ? violationsState.some(v => !v.isSolved)
     : (missingFiles.length > 0 || missingFolders.length > 0 || violations.length > 0);
-
-  const savedScan =
-  typeof window !== "undefined"
-    ? JSON.parse(sessionStorage.getItem("lastScan") || "null")
-    : null;
-
-  const isHistoricalReportView = isFixingFromReport && !!savedScan;
-  const hasSavedScanLogs = Array.isArray(savedScan?.logs) && savedScan.logs.length > 0;
 
   console.log("Saved Scan:", savedScan);
   console.log("Compliance:", savedScan?.compliance);
@@ -440,7 +440,6 @@ export default function ScanResultClient() {
 
       const saved = typeof window !== "undefined" ? JSON.parse(sessionStorage.getItem("lastScan") || "{}") : {};
       const savedLogs = Array.isArray(saved?.logs) ? saved.logs : [];
-      const useSavedLogs = savedLogs.length > 0;
 
       const normalizeSavedLogType = (type: string | undefined, rule?: string) => {
         const normalized = (type || rule || "").toString();
@@ -469,7 +468,7 @@ export default function ScanResultClient() {
         }
         if (violation.type === "Wrong Filename") {
           return violation.expected
-            ? fileEntriesLocal.some((f) => f.name.trim().toLowerCase() === violation.expected.trim().toLowerCase())
+            ? fileEntriesLocal.some((f) => f.name.trim().toLowerCase() === violation.expected!.trim().toLowerCase())
             : false;
         }
         if (violation.type === "Wrong Folder") {
@@ -477,6 +476,8 @@ export default function ScanResultClient() {
         }
         return false;
       };
+
+      const useSavedLogs = savedLogs.length > 0 && isFixingFromReport;
 
       const savedLogViolations: Violation[] = useSavedLogs
         ? savedLogs.map((log: any) => {
@@ -499,7 +500,7 @@ export default function ScanResultClient() {
         })
         : [];
 
-      const initialViolations = savedLogViolations.length > 0
+      const initialViolations = useSavedLogs && savedLogViolations.length > 0
         ? savedLogViolations
         : [
           ...missingFilesLocal.map((f: string) => ({ type: "Missing File", file: f, isSolved: false, webUrl: null })),
@@ -510,14 +511,26 @@ export default function ScanResultClient() {
 
       const totalRequirements = reqFiles.length + reqFolders.length;
       const savedCompliance = typeof saved?.compliance === "number" ? saved.compliance : undefined;
-      const initialComplianceValue = useSavedLogs && savedCompliance != null
-        ? savedCompliance
-        : totalRequirements === 0
+
+      const totalViolationsCount =
+        missingFilesLocal.length +
+        missingFoldersLocal.length +
+        wrongFilenameLocal.length +
+        otherUnknownLocal.length;
+
+      const computedCompliance =
+        totalRequirements === 0
           ? 100
-          : Math.round(
-            ((reqFiles.length - missingFilesLocal.length) + (reqFolders.length - missingFoldersLocal.length)) /
-            totalRequirements * 100
-          );
+          : Math.max(
+              0,
+              Math.round(
+                ((totalRequirements - totalViolationsCount) / totalRequirements) * 100
+              )
+            );
+
+      const initialComplianceValue = savedCompliance != null
+        ? savedCompliance
+        : computedCompliance;
 
       setViolationsState(initialViolations);
       setInitialCompliance(initialComplianceValue);
@@ -639,8 +652,16 @@ export default function ScanResultClient() {
       return;
     }
 
-    if (!selectedViolation.id) {
-      alert("Unable to move this file automatically.");
+    const fileId = selectedViolation.id || realFiles.find(
+      (f) =>
+        !f.isFolder &&
+        f.name.trim().toLowerCase() === selectedViolation.file.trim().toLowerCase()
+    )?.id;
+
+    if (!fileId) {
+      alert(
+        "Unable to move this file automatically because the file ID is unavailable. Please move it manually in OneDrive or use Verify to re-check."
+      );
       return;
     }
 
@@ -650,7 +671,7 @@ export default function ScanResultClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fileId: selectedViolation.id,
+          fileId,
           scanFolderId: folderId
         })
       });
@@ -663,7 +684,10 @@ export default function ScanResultClient() {
       showNotification('success', `Moved "${selectedViolation.file}" out of the scan folder successfully.`);
 
       setViolationsState(prev => prev.map(v => {
-        if (v.id && v.id === selectedViolation.id) {
+        if (v.id && v.id === fileId) {
+          return { ...v, isSolved: true, webUrl: data.file?.webUrl };
+        }
+        if (!v.id && v.file.trim().toLowerCase() === selectedViolation.file.trim().toLowerCase()) {
           return { ...v, isSolved: true, webUrl: data.file?.webUrl };
         }
         return v;
