@@ -158,60 +158,8 @@
     }
   ],
   "stats": {
-    "totalFoldersScanned": 2,
+    "totalFoldersScanned": 0,
     "lastScanDate": "03/06/2026, 2:41:19 pm",
-    "recentScans": [
-      {
-        "id": "38d31346-7a18-4add-afdc-a267b51a48be",
-        "auditId": "AUD-793598c2-434b-4b60-bed7-b2e606a82461",
-        "folder": "Project_2026",
-        "folderName": "Project_2026",
-        "folderId": "01JCPGJ6COVMZYJB4P2NEIZ7TEYIRRJSZ6",
-        "template": "Project Template",
-        "templateId": "t_1778124179454",
-        "createdAt": "2026-06-03T06:41:19.734Z",
-        "date": "03/06/2026, 2:41:19 pm",
-        "status": "Completed",
-        "compliance": 83,
-        "complianceScore": 83,
-        "totalFiles": 8,
-        "totalFolders": 3,
-        "logs": [
-          {
-            "file": "monthly-fees.xlsx",
-            "rule": "Template Wrong Placement",
-            "type": "Wrong Folder",
-            "violation": true,
-            "timestamp": "2026-06-03T06:41:19.733Z"
-          }
-        ]
-      },
-      {
-        "id": "1c132913-2126-455b-9871-9248198b8e7f",
-        "auditId": "AUD-849faa15-5115-456a-8112-e56c87fc2fea",
-        "folder": "Project_2026",
-        "folderName": "Project_2026",
-        "folderId": "01JCPGJ6COVMZYJB4P2NEIZ7TEYIRRJSZ6",
-        "template": "Project Template",
-        "templateId": "t_1778124179454",
-        "createdAt": "2026-06-03T06:41:19.734Z",
-        "date": "03/06/2026, 2:41:23 pm",
-        "status": "Completed",
-        "compliance": 100,
-        "complianceScore": 83,
-        "totalFiles": 8,
-        "totalFolders": 3,
-        "logs": [
-          {
-            "file": "monthly-fees.xlsx",
-            "rule": "Template Wrong Placement",
-            "type": "Wrong Folder",
-            "violation": true,
-            "timestamp": "2026-06-03T06:41:19.733Z"
-          }
-        ],
-        "parentReportId": "38d31346-7a18-4add-afdc-a267b51a48be"
-      }
-    ]
+    "recentScans": []
   }
 }
