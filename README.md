@@ -32,4 +32,4 @@ http://localhost:3000
 - Do not directly remove anything in db.json
 - Please Ctrl + c to stop the local server in terminal before closing your code editor
 - If found that git pull is not functioning, please delete the folder (C:\Users\User\file-organization-and-compliance-system), and redo clone repository and install dependencies
-- If want to try directly, please use this link https://file-organization-and-compliance-sy.vercel.app, please note that the data is stored using db.json thus the system will reset after refreshing the page
+- If want to try directly, please use this link , please note that the data is stored using db.json thus the system will reset after refreshing the page
