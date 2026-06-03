@@ -1,6 +1,34 @@
 {
   "templates": [],
-  "rules": [],
+  "rules": [
+    {
+      "id": 1778123999747,
+      "name": "Missing Report File/Folder",
+      "type": "naming",
+      "condition": "Missing file",
+      "action": null,
+      "status": true,
+      "templateId": null
+    },
+    {
+      "id": 1778124031692,
+      "name": "Wrong Placement",
+      "type": "naming",
+      "condition": "Wrong folder",
+      "action": null,
+      "status": true,
+      "templateId": null
+    },
+    {
+      "id": 1778124061329,
+      "name": "Invalid File Naming",
+      "type": "naming",
+      "condition": "Wrong title",
+      "action": null,
+      "status": true,
+      "templateId": null
+    }
+  ],
   "scans": [],
   "stats": {
     "totalFoldersScanned": 0,

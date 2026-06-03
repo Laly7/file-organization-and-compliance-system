@@ -7,8 +7,9 @@
 2. Install dependencies
 - npm install
 
-3. Run the development server
-- npm run dev
+3. Run the prodcution server
+- npm run build
+- npm run start
 
 4. Open browser  
 http://localhost:3000
@@ -28,6 +29,6 @@ http://localhost:3000
 
 ## Notes
 - Make sure Node.js is installed
-- If port 3000 is in use, run:
-  npm run dev -- -p 3001
-
+- Do not directly remove anything in db.json
+- Please Ctrl + c to stop the local server in terminal before closing your code editor
+- If found that git pull is not functioning, please delete the folder (C:\Users\User\file-organization-and-compliance-system), and redo clone repository and install dependencies
