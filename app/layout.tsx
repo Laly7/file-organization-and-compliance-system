@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "File Organization System",
+  title: "File Automation System",
   description: "Manage and organize files efficiently",
 };
 
