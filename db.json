@@ -1,5 +1,24 @@
 {
-  "templates": [],
+  "templates": [
+    {
+      "id": "t_1ae07467-f8a8-41a2-a25a-9f3806fa8cbe",
+      "name": "Project Template",
+      "requiredFolders": [
+        "Docs/",
+        "Images/"
+      ],
+      "requiredFiles": [
+        "Report.pdf",
+        "Presentation.pptx",
+        "Budget.xlsx"
+      ],
+      "namingRule": "Filename.<FileType>",
+      "optionalFiles": [
+        "Notes.txt",
+        "Draft.docx"
+      ]
+    }
+  ],
   "rules": [
     {
       "id": 1778123999747,
